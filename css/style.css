@@ -422,3 +422,13 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
   .hero-copy h1{font-size:clamp(1.55rem,7.2vw,2rem)}
   .hero-copy .lead{font-size:.86rem;line-height:1.38;max-width:30ch;margin-top:.55rem}
 }
+
+/* robô escalando e derrapando na lateral de um bloco: faíscas */
+.b-sp{position:absolute;left:80%;bottom:40%;width:6px;height:6px;margin:0;border-radius:50%;background:#ffd36a;box-shadow:0 0 6px 2px rgba(255,160,40,.85);opacity:0;pointer-events:none;z-index:3}
+.buddy.sliding .b-sp{animation:bSp .45s ease-out infinite}
+.buddy.sliding.wall-l .b-sp{left:20%;--dx:14px}
+.buddy .b-sp:nth-of-type(2){bottom:48%;width:3px;height:3px}.buddy .b-sp:nth-of-type(3){bottom:34%}.buddy .b-sp:nth-of-type(4){bottom:56%;width:3px;height:3px}
+.buddy .b-sp:nth-of-type(5){bottom:28%;width:5px;height:5px}.buddy .b-sp:nth-of-type(6){bottom:44%;width:3px;height:3px}.buddy .b-sp:nth-of-type(7){bottom:52%}
+.b-sp{--dx:-14px}
+@keyframes bSp{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),26px) scale(.4)}}
+@media (prefers-reduced-motion:reduce){.buddy.sliding .b-sp{animation:none}}
