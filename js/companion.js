@@ -172,8 +172,8 @@
     if (m === mini) return;
     mini = m; box.classList.toggle('mini', mini); track.classList.toggle('on', mini && shown); document.body.classList.toggle('mini-on', mini);
     walking = false; leap = null; drag = null; box.classList.remove('dragging'); flip.style.transform = 'scaleX(1)'; flip.style.opacity = 1; flame(false);
-    if (mini) { layoutTrack(); mf = progress(); x = trackX(mf) - 23; mLastX = x; setPose(IDLE[curSec] || 'feliz'); }
-    else { var d = dims(); pos = d.m; x = pos; y = 0; offY = 0; parked = false; }
+    if (mini) { layoutTrack(); mf = mfT = progress(); }
+    var d = dims(); pos = d.m; x = pos; y = 0; offY = 0; parked = false; setPose(IDLE[curSec] || 'feliz');
   }
   function paintTrack(f, cx) {
     var dots = track.querySelectorAll('.pt-dot'), near = Math.round(f);
@@ -201,8 +201,8 @@
       shown = visible; box.classList.toggle('show', shown); track.classList.toggle('on', mini && shown);
       if (shown) {                                   // sempre entra pelo canto esquerdo
         var d = dims(); pos = d.m; x = d.m; y = offY; bounce = 1; pend = 0; parked = false; leap = null; flip.style.opacity = 1; flame(false); dirFace = 1;
-        if (!mini && !RM) { leap = { type: 'tele', x0: x, x1: x, t: 0.45, dur: 1.0, dir: 1, dist: 0 }; flip.style.opacity = 0; }   // aparece na tela, sem entrar pelo canto
-        if (mini) { layoutTrack(); mfT = progress(); x = -30; mLastX = x; mSecShown = -1; }
+        if (!RM) { leap = { type: 'tele', x0: x, x1: x, t: 0.45, dur: 1.0, dir: 1, dist: 0 }; flip.style.opacity = 0; }   // aparece na tela, sem entrar pelo canto
+        if (mini) { layoutTrack(); mfT = mf = progress(); }
         setPose(IDLE[curSec] || 'triste');
       }
       return;
@@ -239,7 +239,7 @@
     var dt = Math.min(0.05, (now - (lastT || now)) / 1000); lastT = now;
     if (!shown) return;
     if (mq.matches !== mini) setMode();
-    if (mini) { miniLoop(now, dt); return; }
+    if (mini) { if (!trackW) layoutTrack(); mf += (mfT - mf) * (1 - Math.exp(-dt * 8)); paintTrack(mf, trackX(mf)); }   // celular: a pista só mostra o progresso; o robô anda pela página
     var d = dims(), off = d.w * 0.12, bw = d.w * 0.76, vw = window.innerWidth;
     var ty = clamp(offY, 0, d.maxY);
     var iv = obstacles(window.innerHeight - d.h - y, window.innerHeight - y);
@@ -339,7 +339,6 @@
   });
   box.addEventListener('pointermove', function (e) {
     if (!drag || e.pointerId !== drag.id) return;
-    if (mini) return;                       // no celular o robozinho fica na pista: toque = reação
     var dx = e.clientX - drag.px, dy = e.clientY - drag.py, d = dims();
     if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 6) return;
     if (!drag.moved) { drag.moved = true; box.classList.add('dragging'); walking = false; leap = null; flame(false); flip.style.opacity = 1; flip.style.transform = 'scaleX(1)'; reactUntil = 0; setPose(IDLE[curSec] || 'feliz'); }
@@ -351,11 +350,11 @@
     var moved = drag.moved; drag = null; box.classList.remove('dragging');
     var now = performance.now();
     if (moved) { parked = true; parkedScroll = 0; reactUntil = 0; setPose(IDLE[curSec] || 'feliz'); hopNow(); }   // onde você soltar, ele fica
-    else if (!mini && !RM && !leap) { var tp = ['jump', 'jet', 'tele', 'jump'][reactI++ % 4]; startMove(tp, x); }
+    else if (!RM && !leap) { var tp = ['jump', 'jet', 'tele', 'jump'][reactI++ % 4]; startMove(tp, x); }
     else { reactI = (reactI + 1) % REACT.length; setPose(REACT[reactI]); reactUntil = now + 1800; hopNow(); }
   }
   box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
-  box.addEventListener('dblclick', function () { if (mini) return; var d = dims(); offY = 0; parked = false; bounce = 1; pos = d.m; });
+  box.addEventListener('dblclick', function () { var d = dims(); offY = 0; parked = false; bounce = 1; pos = d.m; });
 
   tog.addEventListener('click', function () {
     hidden = !hidden; tog.setAttribute('aria-pressed', String(hidden));
