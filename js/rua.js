@@ -46,7 +46,11 @@ const FAR_F = .10, MID_F = .28;
 const FRAME_STEP = .05;    // distância percorrida por quadro de caminhada
 const LANE_F = .935, LANE_N = .995, VY = .42;   // faixas da rua (linha do chão dos carros) e velocidade vertical
 const JUMP_V = .98, GRAV = 2.7;   // pulo: ~.18 de altura, ~.73 s no ar
-const ROBOT_OFFSET = {'robo-apontando': -.16};  // alinha o corpo (o braço estica para a frente)
+const P = window.POSES || {};   // [largura, altura, ancora-x] de cada pose (altura 560 = robô em pé)
+const NAME = 'Forjabô';
+const CORE = ['teleporte','andando-1','andando-2','andando-3','andando-4','apontando','comemorando','estrela','agachado','triste','joinha','aparecendo'];
+const SHOP_POSE = { padaria:'padaria', adega:'adega', academia:'academia', barbearia:'barbearia' };   // o robô aparece com o objeto da loja quando o site liga
+const MORE = ['padaria','adega','academia','barbearia','derrapando','caindo','tonto','levantando','pensativo','celular','porta','danca','espiando','feliz'];
 
 /* ---------- elementos ---------- */
 const hero = document.getElementById('hero');
@@ -73,7 +77,9 @@ let wasAway = false, heroVisible = true, modalOpen = false, opener = null, moved
 let camK = 0, camShop = -1, textHidden = false;
 let jy = 0, jv = 0, airborne = false;
 let ry = ROBOT_FEET, keyU = false, keyD = false, padV = 0, stun = 0, invul = 0, knockTo = ROBOT_FEET, crossed = false, crossT = 0;
-let layers = {}, shopEls = [], shopCx = [], shopW = [], pills = [], chips = [], panels = [], cars = [], robotEl, rIdle, rframes = {}, curFrame = '', rflip, rshadow;
+let layers = {}, shopEls = [], shopCx = [], shopW = [], pills = [], chips = [], panels = [], cars = [], robotEl, rbobEl, rframes = {}, curFrame = '', rflip, rshadow;
+let teleT = 0, teleI = -1, teleStage = 0;
+let crouchT = 0, landT = 0, skidT = 0, holdPose = '', holdT = 0, idleT = 0, openT = 0, wasAir = false;
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rng = seed => () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
@@ -193,15 +199,10 @@ function build() {
   robotEl = div('robot', stage, { width:'0', height:'0' });
   rshadow = div('rshadow', robotEl, { left:(-ROBOT_H * H * .32) + 'px', top:(-.012 * H) + 'px', width:(ROBOT_H * H * .64) + 'px', height:(.034 * H) + 'px' });
   rflip = div('rflip', robotEl);
-  const rbob = div('rbob', rflip);
-  ['robo-andando-1','robo-andando-2','robo-andando-3','robo-andando-4','robo-apontando','robo-comemorando','robo-triste'].forEach(n => {
-    const [w, h] = A[n], hh = ROBOT_H * H, ww = hh * w / h;
-    const i = document.createElement('img'); i.src = IMG(n); i.alt = ''; i.draggable = false; i.className = 'rframe';
-    Object.assign(i.style, { width:ww + 'px', height:hh + 'px', transform:'translateX(' + (-50 + (ROBOT_OFFSET[n] || 0) * 100) + '%)' });
-    rbob.appendChild(i); rframes[n] = i;
-  });
-  rIdle = rbob;
-  setFrame('robo-andando-3');
+  rbobEl = div('rbob', rflip);
+  CORE.forEach(mkFrame);
+  setFrame('andando-3');
+  setTimeout(() => MORE.forEach(mkFrame), 1200);
 
   // 6) pista com carros (à frente do robô)
   const road = div('layer roadlayer roadbg', stage); layers.road = road;
@@ -263,11 +264,35 @@ function applyCamera() {
   if (layers.roadF) layers.roadF.style.transform = t(1);
   if (layers.roadN) layers.roadN.style.transform = t(1);
 }
+/* cada pose tem altura própria (P[n][1] / 560 da altura do robô em pé) e fica ancorada pelo corpo (ax) */
+function mkFrame(n) {
+  let im = rframes[n];
+  if (im) return im;
+  const pm = P[n]; if (!pm) return null;
+  const hh = ROBOT_H * H * pm[1] / 560, ww = hh * pm[0] / pm[1];
+  im = document.createElement('img'); im.alt = ''; im.draggable = false; im.className = 'rframe'; im.decoding = 'async';
+  Object.assign(im.style, { width:ww + 'px', height:hh + 'px', transform:'translateX(' + (-pm[2] * 100) + '%)' });
+  im.src = IMG('robo-' + n); rbobEl.appendChild(im); rframes[n] = im;
+  return im;
+}
 function setFrame(n) {
   if (n === curFrame) return;
+  const im = mkFrame(n);
+  if (!im || !(im.complete && im.naturalWidth)) return;   // ainda carregando: mantém a pose anterior
   if (rframes[curFrame]) rframes[curFrame].classList.remove('on');
-  rframes[n].classList.add('on'); curFrame = n;
+  im.classList.add('on'); curFrame = n;
 }
+/* poeirinha no chão (derrapar, aterrissar, aparecer) */
+function dust(n, dir) {
+  if (RM || !robotEl) return;
+  for (let k = 0; k < n; k++) {
+    const d = document.createElement('i'); d.className = 'dust';
+    const sz = (.012 + Math.random() * .014) * H;
+    d.style.cssText = 'width:' + sz + 'px;height:' + sz + 'px;left:' + ((Math.random() - .5) * .08 * H - (dir || 0) * .05 * H) + 'px;top:' + (-sz * .8) + 'px;--dx:' + (-(dir || (Math.random() - .5) * 2) * (.03 + Math.random() * .05) * H) + 'px;--dy:' + (-(.01 + Math.random() * .03) * H) + 'px';
+    robotEl.appendChild(d); setTimeout(() => d.remove(), 650);
+  }
+}
+function hold(p, t) { holdPose = p; holdT = t; }
 function renderRobot() {
   const sx = (robotU - camU) * H, sy = ry * H;
   const sc = 1 + Math.max(0, ry - ROBOT_FEET) * .55;
@@ -296,6 +321,7 @@ function paintShop(i) {
 }
 function explainShop(i) {
   panelOpen[i] = true; paintShop(i);
+  if (i === activeIdx) hold('pensativo', 2);
   const el = shopEls[i];
   el.classList.remove('deny'); void el.offsetWidth; el.classList.add('deny');
   setTimeout(() => el.classList.remove('deny'), 1500);
@@ -303,6 +329,7 @@ function explainShop(i) {
 }
 function turnOnShop(i) {
   siteOn[i] = true; panelOpen[i] = true; paintShop(i);
+  if (i === activeIdx) { hold(SHOP_POSE[SHOPS[i].slug] || 'joinha', 2.2); dust(4, 0); }
   const el = shopEls[i];
   el.classList.remove('deny', 'ignite'); void el.offsetWidth; el.classList.add('ignite');
   setTimeout(() => el.classList.remove('ignite'), 1100);
@@ -343,15 +370,15 @@ function setActive(i) {
 function hitByCar(c) {
   c.stop = 1.4;
   c.img.classList.remove('hit'); void c.img.offsetWidth; c.img.classList.add('hit');
-  stun = .9; invul = 2.2; vel = 0;
+  stun = 1.15; invul = 2.2; vel = 0; crouchT = 0; landT = 0; skidT = 0; holdT = 0;
   knockTo = Math.max(ROBOT_FEET, ry - .12);
   airborne = true; jv = .62;
-  liveEl.textContent = 'Um carro esbarrou no robô. Ele se recupera e continua.';
+  liveEl.textContent = 'Um carro esbarrou no ' + NAME + '. Ele se recupera e continua.';
 }
 function crossStreet() {
   crossed = true; crossT = performance.now();
   hintEl.classList.add('off');
-  liveEl.textContent = 'O robô atravessou a rua e seguiu para a próxima parte da página.';
+  liveEl.textContent = 'O ' + NAME + ' atravessou a rua e seguiu para a próxima parte da página.';
   setTimeout(() => {
     const t = document.getElementById('dor');
     if (t && crossed) t.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' });
@@ -360,8 +387,9 @@ function crossStreet() {
 
 /* ---------- pulo ---------- */
 function jump() {
-  if (airborne || modalOpen || !heroVisible || !H) return;
-  airborne = true; jv = JUMP_V;
+  if (airborne || crouchT > 0 || modalOpen || !heroVisible || !H || stun > 0) return;
+  if (RM) { airborne = true; jv = JUMP_V; return; }
+  crouchT = .11; holdT = 0;          // agacha um instante antes de sair do chão
 }
 
 /* ---------- laço principal ---------- */
@@ -372,7 +400,7 @@ function tick(t) {
 
   // entrada
   let dir = 0;
-  if (!modalOpen && heroVisible && stun <= 0 && !crossed) dir = clamp((keyR ? 1 : 0) - (keyL ? 1 : 0) + padDir, -1, 1);
+  if (!modalOpen && heroVisible && stun <= 0 && !crossed && teleT <= 0) dir = clamp((keyR ? 1 : 0) - (keyL ? 1 : 0) + padDir, -1, 1);
   let desired = dir * VMAX;
   if (dir !== 0) { targetU = null; pendingShop = null; }
   else if (targetU !== null && !modalOpen) {
@@ -383,13 +411,17 @@ function tick(t) {
       if (p !== null) shopAction(p);
     } else desired = Math.sign(d) * Math.min(VMAX, Math.max(.14, Math.abs(d) * 2.4));
   }
+  const vel0 = vel;
   if (!drag) { vel += (desired - vel) * Math.min(1, dt * 9); robotU += vel * dt; }
+  if (dir === 0 && targetU === null && Math.abs(vel0) > .36 && Math.abs(vel) < Math.abs(vel0) && skidT <= 0 && !airborne && stun <= 0 && ry < ROBOT_FEET + .01 && !drag) {
+    skidT = .3; facing = vel0 > 0 ? 1 : -1; dust(5, facing);
+  }
 
   // vertical: descer à rua, subir de volta à calçada, atravessar
   stun -= dt; invul -= dt;
   const ry0 = ry;
   if (stun > 0) ry += (knockTo - ry) * Math.min(1, dt * 6);
-  else if (!crossed) {
+  else if (!crossed && teleT <= 0) {
     let vd = 0;
     if (!modalOpen && heroVisible) vd = clamp((keyD ? 1 : 0) - (keyU ? 1 : 0) + padV, -1, 1);
     if ((targetU !== null || pendingShop !== null) && ry > ROBOT_FEET) vd = -1;
@@ -403,7 +435,7 @@ function tick(t) {
       if (Math.abs(robotU - (c.x + c.w / 2)) < c.w / 2 + .03) { hitByCar(c); break; }
     }
   }
-  if (crossed && heroVisible && performance.now() - crossT > 1800) { crossed = false; ry = ROBOT_FEET; }
+  if (crossed && heroVisible && performance.now() - crossT > 1800) { crossed = false; ry = ROBOT_FEET; hold('aparecendo', 1); dust(6, 0); }
   robotU = clamp(robotU, MINU, L - .5);
   const maxCam = Math.max(0, L - vwU);
   const baseCam = clamp(robotU - .34 * vwU, 0, maxCam);
@@ -428,16 +460,47 @@ function tick(t) {
   const away = robotU > .95 || (narrow && textHidden);
   if (away !== wasAway) { wasAway = away; hero.classList.toggle('away', away); }
 
-  // pulo
-  if (airborne) { jv -= GRAV * dt; jy += jv * dt; if (jy <= 0) { jy = 0; jv = 0; airborne = false; } }
+  // teletransporte (busca do topo, loja longe): some em anel de energia e reaparece perto da loja
+  if (teleT > 0) {
+    teleT -= dt; vel = 0;
+    robotEl.style.opacity = teleStage === 1 ? Math.max(0, teleT / .6).toFixed(2) : (1 - Math.max(0, teleT / .5)).toFixed(2);
+    if (teleT <= 0) {
+      if (teleStage === 1) {
+        teleStage = 2; teleT = .5; robotU = clamp(shopCx[teleI] - .75, MINU, L - .5); lastRobot = robotU; facing = 1; ry = ROBOT_FEET; dust(8, 0);
+      } else { teleStage = 0; robotEl.style.opacity = ''; walkToShop(teleI, true); }
+    }
+  }
 
-  // quadro do robô
-  if (stun > 0) setFrame('robo-triste');
-  else if (airborne) setFrame('robo-comemorando');
-  else if (walking) setFrame('robo-andando-' + (Math.floor(phase / FRAME_STEP) % 4 + 1));
-  else if (a >= 0) { facing = shopCx[a] >= robotU ? 1 : -1; setFrame('robo-apontando'); }
-  else setFrame('robo-andando-3');
-  robotEl.classList.toggle('idle', !walking && !airborne && stun <= 0);
+  // pulo: agacha, impulsiona, estrela no pico, aterrissa agachando e levantando poeira
+  if (crouchT > 0) { crouchT -= dt; if (crouchT <= 0) { crouchT = 0; airborne = true; jv = JUMP_V; } }
+  if (airborne) {
+    jv -= GRAV * dt; jy += jv * dt;
+    if (jy <= 0) { jy = 0; jv = 0; airborne = false; if (stun <= 0) { landT = .2; dust(6, 0); } }
+  }
+  if (landT > 0) landT -= dt;
+  if (skidT > 0) skidT -= dt;
+  if (holdT > 0) { holdT -= dt; if (holdT <= 0) holdPose = ''; }
+  if (walking || airborne || teleT > 0) holdT = 0, holdPose = '';
+
+  // quadro do robô (prioridade: batida > ar > agachar/aterrissar > derrapar > andar > loja > parado)
+  const still = !walking && !airborne && stun <= 0 && crouchT <= 0 && landT <= 0 && skidT <= 0;
+  idleT = (still && a < 0 && !holdPose && heroVisible && !modalOpen) ? idleT + dt : 0;
+  let pose;
+  if (teleT > 0) pose = teleStage === 1 ? 'teleporte' : 'aparecendo';
+  else if (stun > 0) pose = stun > .8 ? 'caindo' : (stun > .3 ? 'tonto' : 'levantando');
+  else if (airborne) pose = jv > .55 ? 'comemorando' : (jv > -.47 ? 'estrela' : 'comemorando');
+  else if (crouchT > 0 || landT > 0) pose = 'agachado';
+  else if (skidT > 0) pose = 'derrapando';
+  else if (walking) pose = 'andando-' + (Math.floor(phase / FRAME_STEP) % 4 + 1);
+  else if (holdPose) pose = holdPose;
+  else if (a >= 0) {
+    facing = shopCx[a] >= robotU ? 1 : -1;
+    pose = (siteOn[a] && panelOpen[a]) ? (SHOP_POSE[SHOPS[a].slug] || 'joinha') : (panelOpen[a] ? 'pensativo' : 'apontando');
+  }
+  else if (idleT > 4) { const k = (idleT - 4) % 10; pose = k < 4 ? 'celular' : (k < 7 ? 'pensativo' : 'andando-3'); }
+  else pose = 'andando-3';
+  setFrame(pose);
+  robotEl.classList.toggle('idle', still && pose !== 'celular');
 
   // carros
   for (const c of cars) if (c.stop > 0) c.stop -= dt;
@@ -461,8 +524,17 @@ function tick(t) {
 
 /* ---------- janela de prévia ---------- */
 function openShop(i) {
-  const s = SHOPS[i];
+  if (openT) return;
   opener = document.activeElement;
+  if (!RM && heroVisible && i === activeIdx && !modalOpen) {   // o robô estica a mão para a porta e só então a prévia abre
+    facing = shopCx[i] >= robotU ? 1 : -1; hold('porta', .6);
+    openT = setTimeout(() => { openT = 0; showShop(i); }, 380);
+    return;
+  }
+  showShop(i);
+}
+function showShop(i) {
+  const s = SHOPS[i];
   modalTitle.textContent = 'Modelo · ' + s.kicker + ' ' + s.brand;
   const url = s.slug + '/index.html';
   modalOpenLink.href = url;
@@ -513,22 +585,50 @@ window.addEventListener('keyup', e => {
 });
 window.addEventListener('blur', () => { keyL = keyR = keyU = keyD = false; padDir = 0; padV = 0; });
 
-const holdPad = (id, d) => {
-  const b = document.getElementById(id);
-  const on = e => { e.preventDefault(); padDir = d; };
-  const off = () => { if (padDir === d) padDir = 0; };
-  b.addEventListener('pointerdown', on);
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, off));
-  b.addEventListener('contextmenu', e => e.preventDefault());
-};
-holdPad('padL', -1); holdPad('padR', 1);
-const jumpBtn = document.getElementById('padJump'), downBtn = document.getElementById('padDown');
-jumpBtn.addEventListener('pointerdown', e => { e.preventDefault(); if (ry > ROBOT_FEET + .02) padV = -1; else jump(); });
-['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => jumpBtn.addEventListener(ev, () => { if (padV === -1) padV = 0; }));
-downBtn.addEventListener('pointerdown', e => { e.preventDefault(); padV = 1; });
-['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => downBtn.addEventListener(ev, () => { if (padV === 1) padV = 0; }));
-[jumpBtn, downBtn].forEach(b => b.addEventListener('contextmenu', e => e.preventDefault()));
-const actGo = () => { if (activeIdx >= 0 && !modalOpen) shopAction(activeIdx); };
+/* direcional analógico (celular): empurre para os lados = andar (proporcional); para cima = pular na calçada / subir na rua; para baixo = descer */
+const buzz = ms => { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (_) {} };
+const stickEl = document.getElementById('stick'), knobEl = document.getElementById('stickKnob');
+{
+  let sid = null, armed = true, lastZone = 0;
+  const DZ = .16, R = () => (stickEl.clientWidth - knobEl.clientWidth) / 2;
+  const setStick = (nx, ny) => {
+    knobEl.style.transform = 'translate(' + (nx * R()) + 'px,' + (ny * R()) + 'px)';
+    const ax = Math.abs(nx), ay = Math.abs(ny);
+    padDir = ax < DZ ? 0 : Math.sign(nx) * Math.min(1, (ax - DZ) / (1 - DZ - .1));
+    let v = 0;
+    if (ay > .34) v = Math.sign(ny) * Math.min(1, (ay - .34) / .5);
+    if (v < 0) {                                    // para cima
+      if (ry > ROBOT_FEET + .02) { padV = v; armed = false; }   // na rua: sobe de volta à calçada
+      else { padV = 0; if (armed && v < -.15) { armed = false; jump(); buzz(14); } }
+    } else padV = v;
+    if (ny > -.3) armed = true;
+    const zone = ax > .85 ? 2 : (ax > DZ ? 1 : 0);
+    if (zone !== lastZone) { if (zone === 2) buzz(6); lastZone = zone; }
+    stickEl.classList.toggle('on', padDir !== 0 || padV !== 0);
+  };
+  const move = e => {
+    const r = stickEl.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let nx = (e.clientX - cx) / R(), ny = (e.clientY - cy) / R();
+    const m = Math.hypot(nx, ny); if (m > 1) { nx /= m; ny /= m; }
+    setStick(nx, ny);
+  };
+  stickEl.addEventListener('pointerdown', e => {
+    if (sid !== null) return; e.preventDefault(); sid = e.pointerId;
+    try { stickEl.setPointerCapture(e.pointerId); } catch (_) {}
+    stickEl.classList.add('held'); buzz(8); move(e);
+  });
+  stickEl.addEventListener('pointermove', e => { if (e.pointerId === sid) { e.preventDefault(); move(e); } });
+  const rel = e => {
+    if (e.pointerId !== sid) return; sid = null; armed = true; lastZone = 0;
+    padDir = 0; padV = 0; knobEl.style.transform = ''; stickEl.classList.remove('held', 'on');
+  };
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => stickEl.addEventListener(ev, rel));
+  stickEl.addEventListener('contextmenu', e => e.preventDefault());
+}
+const jumpBtn = document.getElementById('padJump');
+jumpBtn.addEventListener('pointerdown', e => { e.preventDefault(); jump(); buzz(12); });
+jumpBtn.addEventListener('contextmenu', e => e.preventDefault());
+const actGo = () => { if (activeIdx >= 0 && !modalOpen) { buzz(10); shopAction(activeIdx); } };
 actEl.addEventListener('click', actGo); scBtn.addEventListener('click', actGo);
 
 stage.addEventListener('pointerdown', e => {
@@ -619,14 +719,28 @@ window.addEventListener('resize', () => {
     build(); robotU = clamp(keep, MINU, L - .5); lastRobot = robotU; setActive(act);
   }, 150);
 });
-new IntersectionObserver(es => { heroVisible = es[0].intersectionRatio > .35; if (es[0].intersectionRatio < .05) { textHidden = false; moved = false; if (crossed) { crossed = false; ry = ROBOT_FEET; stun = 0; } } }, { threshold:[0, .05, .35, .7, 1] }).observe(hero);
+new IntersectionObserver(es => { heroVisible = es[0].intersectionRatio > .35; if (es[0].intersectionRatio < .05) { textHidden = false; moved = false; if (crossed) { crossed = false; ry = ROBOT_FEET; stun = 0; hold('aparecendo', 1); } } }, { threshold:[0, .05, .35, .7, 1] }).observe(hero);
 
 if (location.search.indexOf('debug') >= 0) window.__rua = { get cars() { return cars; }, st: () => ({ ry, robotU, stun, crossed, invul, airborne }) };
+/* usado pela busca do topo: leva o robô até a loja (e rola até a rua, se estiver lá embaixo) */
+window.Forja = {
+  goShop(i) {
+    if (modalOpen) closeModal();
+    const r = hero.getBoundingClientRect();
+    if (r.bottom < innerHeight * .6 || r.top < -innerHeight * .4) hero.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' });
+    crossed = false; stun = 0;
+    activeIdx >= 0 && activeIdx !== i && setActive(-1);
+    if (!RM && Math.abs(shopCx[i] - robotU) > 2.4 && teleT <= 0) { teleI = i; teleStage = 1; teleT = .6; targetU = null; pendingShop = null; crouchT = 0; }
+    else walkToShop(i, true);
+    liveEl.textContent = NAME + ' foi até a ' + SHOPS[i].kicker.toLowerCase() + ' ' + SHOPS[i].brand + '.';
+  }
+};
 buildGrid(); buildAbout(); buildContact();
 build();
 requestAnimationFrame(tick);
 // pequena pista visual: empurrãozinho ao carregar
 const nudge = () => { if (!RM && !moved && !drag && targetU === null && !modalOpen) targetU = .72; };
-if (!window.INTRO_OPEN) setTimeout(nudge, 900);
-window.addEventListener('intro-end', () => setTimeout(nudge, 500));
+const appear = () => { if (!RM) { hold('aparecendo', 1.1); dust(8, 0); } };
+if (!window.INTRO_OPEN) { appear(); setTimeout(nudge, 1500); }
+window.addEventListener('intro-end', () => { appear(); setTimeout(nudge, 1600); });
 })();
