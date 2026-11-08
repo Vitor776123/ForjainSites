@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Forja de inSITES — sites para o comércio local</title>
+<meta name="description" content="Passeie pela rua com o nosso robô e entre nas lojas: cada uma é um modelo de site feito pela Forja de inSITES.">
+<meta name="theme-color" content="#0A0B0D">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/icon-16.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="assets/icons/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,600&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="#top" aria-label="Forja de inSITES — início"><img class="brand-face" src="assets/img/logo-face.webp" alt="" width="40" height="29" draggable="false"><span>Forja de in<b>SITES</b></span></a>
+  <a class="btn btn-cyan" href="#modelos">Ver os modelos</a>
+</header>
+
+<main id="top">
+  <section class="hero" id="hero" aria-label="Rua interativa com lojas de exemplo">
+    <div class="stage" id="stage" aria-hidden="false"></div>
+
+    <div class="scrim" aria-hidden="true"></div>
+    <div class="hero-copy">
+      <p class="eyebrow">Sites para o comércio local</p>
+      <h1>Seu comércio merece um site à altura.</h1>
+      <p class="lead">Caminhe pela rua com o nosso robô e entre nas lojas: cada uma é um modelo de site que a Forja de inSITES constrói.</p>
+    </div>
+
+    <div class="hint" id="hint" role="note">
+      <span class="hint-keys"><kbd>←</kbd><kbd>→</kbd> caminhar</span>
+      <span class="hint-sep" aria-hidden="true">·</span>
+      <span><kbd>Enter</kbd> entrar na loja</span>
+      <span class="hint-sep hint-touch" aria-hidden="true">·</span>
+      <span class="hint-touch">arraste a tela</span>
+    </div>
+
+    <div class="pad" id="pad">
+      <button class="pad-btn" id="padL" aria-label="Caminhar para a esquerda">◀</button>
+      <button class="pad-btn" id="padR" aria-label="Caminhar para a direita">▶</button>
+    </div>
+
+    <p class="sr-only" id="live" aria-live="polite"></p>
+  </section>
+
+  <section class="band" id="dor" aria-labelledby="dor-titulo">
+    <div class="wrap">
+      <p class="eyebrow eyebrow-cyan">A dor</p>
+      <h2 id="dor-titulo">O cliente decide antes de chegar à sua porta.</h2>
+      <div class="trio">
+        <article><span class="num">1</span><h3>Ele procura primeiro</h3><p>No Google e no Instagram. Se não encontra um site organizado, que chame atenção, ele segue para o próximo.</p></article>
+        <article><span class="num">2</span><h3>O atendimento vira correria</h3><p>Preço, horário e endereço respondidos o dia inteiro, e pedidos que se perdem no meio da conversa do WhatsApp.</p></article>
+        <article><span class="num">3</span><h3>A loja fecha, a vitrine também</h3><p>Fora do horário, ninguém vê cardápio, preços ou horários. Um site continua atendendo à noite e no fim de semana.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="models" id="modelos" aria-labelledby="modelos-titulo">
+    <div class="wrap">
+      <p class="eyebrow eyebrow-cyan">A solução</p>
+      <h2 id="modelos-titulo">Um site feito para o seu tipo de negócio.</h2>
+      <p class="lead lead-dark">Cada modelo resolve uma dor real do dia a dia e é adaptado ao seu comércio: cores, textos, fotos e o jeito de atender seus clientes. Clique para ver a prévia.</p>
+      <div class="grid" id="grid"></div>
+      <p class="note">Os nomes das lojas são fictícios e os sites estão em construção: são modelos de demonstração.</p>
+    </div>
+  </section>
+  <section class="about" id="quem" aria-labelledby="quem-titulo">
+    <div class="wrap about-grid">
+      <div class="photo" id="photo" role="img" aria-label="Espaço reservado para a foto"><span>Sua foto aqui</span></div>
+      <div>
+        <p class="eyebrow eyebrow-cyan">Quem sou eu</p>
+        <h2 id="quem-titulo">Eu construo o site, você cuida do negócio.</h2>
+        <p class="about-text" id="about-text"></p>
+        <p>A inteligência artificial é a minha ferramenta para ganhar velocidade. O desenho, a segurança, o banco de dados e a revisão de cada página passam pelas minhas mãos. No fim, você recebe um site bonito, rápido e confiável, feito para o seu negócio.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="como" aria-labelledby="como-titulo">
+    <div class="wrap">
+      <p class="eyebrow eyebrow-cyan">Como funciona</p>
+      <h2 id="como-titulo">Do primeiro contato ao site no ar.</h2>
+      <ol class="steps">
+        <li><span class="num">1</span><h3>Conversa rápida</h3><p>Eu entendo o seu negócio e o que os seus clientes mais perguntam.</p></li>
+        <li><span class="num">2</span><h3>Prévia do seu site</h3><p>Você vê como ficaria antes de decidir qualquer coisa.</p></li>
+        <li><span class="num">3</span><h3>Ajustes</h3><p>Textos, cores e fotos do seu jeito, até ficar como você quer.</p></li>
+        <li><span class="num">4</span><h3>No ar</h3><p>O site é publicado e fica pronto para receber clientes.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="contact" id="contato" aria-labelledby="contato-titulo">
+    <div class="wrap">
+      <h2 id="contato-titulo">Vamos colocar o seu comércio na rua?</h2>
+      <p class="lead lead-dark">Conte sobre o seu negócio e eu mostro como o site dele ficaria.</p>
+      <a class="btn btn-cyan btn-lg" id="wa" href="#contato">Chamar no WhatsApp</a>
+      <p class="note" id="wa-note" hidden>O contato será adicionado em breve.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span class="foot-brand">Forja de in<b>SITES</b></span>
+    <span class="foot-note">Protótipo em construção</span>
+  </div>
+</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="win" id="win">
+    <div class="win-bar">
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="win-title" id="modal-title">Modelo</span>
+      <a class="win-open" id="modal-open" href="#" target="_blank" rel="noopener">Abrir em tela cheia ↗</a>
+      <button class="win-close" data-close aria-label="Fechar prévia">✕</button>
+    </div>
+    <div class="win-strip" id="win-strip"><p><b>A dor</b><span class="s-dor"></span></p><p><b>A solução</b><span class="s-sol"></span></p></div>
+    <iframe id="modal-frame" title="Prévia do site" src="about:blank"></iframe>
+  </div>
+</div>
+
+<noscript>
+  <style>.hero{display:none}</style>
+  <section class="models"><div class="wrap"><h2>Modelos</h2><p class="lead lead-dark">Ative o JavaScript para passear pela rua. Enquanto isso, os modelos estão em /padaria, /adega, /academia e outras pastas.</p></div></section>
+</noscript>
+
+<script src="js/config.js"></script>
+<script src="js/manifest.js"></script>
+<script src="js/intro.js"></script>
+<script src="js/rua.js"></script>
+<script src="js/companion.js"></script>
+</body>
+</html>
