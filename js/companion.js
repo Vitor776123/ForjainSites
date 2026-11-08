@@ -75,6 +75,7 @@
     var w = box.offsetWidth || 120, h = box.offsetHeight || 150, m = Math.max(8, window.innerWidth * 0.025);
     return { w: w, h: h, m: m, maxX: Math.max(0, window.innerWidth - w), maxY: Math.max(0, window.innerHeight - h - 8) };
   }
+  function homeY() { return mini ? Math.round(window.innerHeight * 0.36) : 0; }   // celular: anda no meio da tela, longe da barra de progresso
   function sectionAt() {
     var mid = window.innerHeight * 0.55, cur = null;
     for (var i = 0; i < secs.length; i++) { var r = secs[i].getBoundingClientRect(); if (r.top <= mid) cur = ids[i]; }
@@ -173,7 +174,7 @@
     mini = m; box.classList.toggle('mini', mini); track.classList.toggle('on', mini && shown); document.body.classList.toggle('mini-on', mini);
     walking = false; leap = null; drag = null; box.classList.remove('dragging'); flip.style.transform = 'scaleX(1)'; flip.style.opacity = 1; flame(false);
     if (mini) { layoutTrack(); mf = mfT = progress(); }
-    var d = dims(); pos = d.m; x = pos; y = 0; offY = 0; parked = false; setPose(IDLE[curSec] || 'feliz');
+    var d = dims(); pos = d.m; x = pos; offY = y = clamp(homeY(), 0, d.maxY); parked = false; setPose(IDLE[curSec] || 'feliz');
   }
   function paintTrack(f, cx) {
     var dots = track.querySelectorAll('.pt-dot'), near = Math.round(f);
@@ -200,7 +201,7 @@
     if (visible !== shown) {
       shown = visible; box.classList.toggle('show', shown); track.classList.toggle('on', mini && shown);
       if (shown) {                                   // sempre entra pelo canto esquerdo
-        var d = dims(); pos = d.m; x = d.m; y = offY; bounce = 1; pend = 0; parked = false; leap = null; flip.style.opacity = 1; flame(false); dirFace = 1;
+        var d = dims(); pos = d.m; x = d.m; offY = homeY(); y = offY; bounce = 1; pend = 0; parked = false; leap = null; flip.style.opacity = 1; flame(false); dirFace = 1;
         if (!RM) { leap = { type: 'tele', x0: x, x1: x, t: 0.45, dur: 1.0, dir: 1, dist: 0 }; flip.style.opacity = 0; }   // aparece na tela, sem entrar pelo canto
         if (mini) { layoutTrack(); mfT = mf = progress(); }
         setPose(IDLE[curSec] || 'triste');
@@ -354,7 +355,7 @@
     else { reactI = (reactI + 1) % REACT.length; setPose(REACT[reactI]); reactUntil = now + 1800; hopNow(); }
   }
   box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
-  box.addEventListener('dblclick', function () { var d = dims(); offY = 0; parked = false; bounce = 1; pos = d.m; });
+  box.addEventListener('dblclick', function () { var d = dims(); offY = homeY(); parked = false; bounce = 1; pos = d.m; });
 
   tog.addEventListener('click', function () {
     hidden = !hidden; tog.setAttribute('aria-pressed', String(hidden));
