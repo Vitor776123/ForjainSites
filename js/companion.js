@@ -143,6 +143,7 @@
       else if (t < cl + jm) { var p3 = (t - cl) / jm; x = L.x0 + L.dir * 6 + (a - L.x0 - L.dir * 6) * ez(p3); arc = 120 * (1 - p3) + 4 * 50 * p3 * (1 - p3); setPose(airP(p3)); }
       else { x = a; setPose('agachado'); }
     }
+    arc = Math.min(arc, Math.max(0, d.maxY - y));
     y += (ty - y) * (1 - Math.exp(-dt * 8));
     if (L.t >= D) { leap = null; arc = 0; flip.style.opacity = 1; flame(false); flip.style.transform = 'scaleX(1)'; setPose(IDLE[curSec] || 'feliz'); hopNow(); }
   }
@@ -170,7 +171,7 @@
     var m = !!mq.matches;
     if (m === mini) return;
     mini = m; box.classList.toggle('mini', mini); track.classList.toggle('on', mini && shown); document.body.classList.toggle('mini-on', mini);
-    walking = false; leap = null; drag = null; box.classList.remove('dragging'); flip.style.transform = 'scaleX(1)';
+    walking = false; leap = null; drag = null; box.classList.remove('dragging'); flip.style.transform = 'scaleX(1)'; flip.style.opacity = 1; flame(false);
     if (mini) { layoutTrack(); mf = progress(); x = trackX(mf) - 23; mLastX = x; setPose(IDLE[curSec] || 'feliz'); }
     else { var d = dims(); pos = d.m; x = pos; y = 0; offY = 0; parked = false; }
   }
@@ -199,7 +200,8 @@
     if (visible !== shown) {
       shown = visible; box.classList.toggle('show', shown); track.classList.toggle('on', mini && shown);
       if (shown) {                                   // sempre entra pelo canto esquerdo
-        var d = dims(); pos = d.m; x = -d.w - 4; y = offY; bounce = 1; pend = 0; parked = false; leap = null; dirFace = 1;
+        var d = dims(); pos = d.m; x = d.m; y = offY; bounce = 1; pend = 0; parked = false; leap = null; flip.style.opacity = 1; flame(false); dirFace = 1;
+        if (!mini && !RM) { leap = { type: 'tele', x0: x, x1: x, t: 0.45, dur: 1.0, dir: 1, dist: 0 }; flip.style.opacity = 0; }   // aparece na tela, sem entrar pelo canto
         if (mini) { layoutTrack(); mfT = progress(); x = -30; mLastX = x; mSecShown = -1; }
         setPose(IDLE[curSec] || 'triste');
       }
@@ -243,7 +245,7 @@
     var iv = obstacles(window.innerHeight - d.h - y, window.innerHeight - y);
     function hit(L) { for (var i = 0; i < iv.length; i++) if (L + off < iv[i][1] && L + off + bw > iv[i][0]) return iv[i]; return null; }
     var dragging = drag && drag.moved, heading = 0, px = x;
-    function clearFrom(L, dir) { var I, n = 0; while ((I = hit(L)) && n++ < 10) L = dir > 0 ? I[1] - off : I[0] - off - bw; return (!I && L >= -off && L <= d.maxX) ? L : null; }
+    function clearFrom(L, dir) { var I, n = 0; while ((I = hit(L)) && n++ < 10) L = dir > 0 ? I[1] - off : I[0] - off - bw; return (!I && L >= 0 && L <= d.maxX) ? L : null; }
     function freeSpot(minDist, pref) {                       // escolhe um ponto livre da tela para ir
       var c = [], n = 14, i, L;
       for (i = 0; i <= n; i++) { L = d.m + (d.maxX - d.m) * i / n; if (!hit(L) && Math.abs(L - x) >= minDist) c.push(L); }
@@ -255,8 +257,8 @@
       var inside = !!hit(pos);
       if (parked && (!inside || parkedScroll > 700)) { parked = false; parkedScroll = 0; }
       // 1) algo apareceu embaixo dele (a página rolou): passa para o outro lado
-      if (inside && !parked && pos > -d.w * 0.5 && pos < vw - d.w * 0.5) {
-        var go = function (dir) { var L = pos, I, n = 0; while ((I = hit(L)) && n++ < 10) L = dir > 0 ? I[1] - off : I[0] - off - bw; return (!I && L >= -off && L <= d.maxX) ? L : null; };
+      if (inside && !parked) {
+        var go = function (dir) { var L = pos, I, n = 0; while ((I = hit(L)) && n++ < 10) L = dir > 0 ? I[1] - off : I[0] - off - bw; return (!I && L >= 0 && L <= d.maxX) ? L : null; };
         var a = go(dirTravel), b = go(-dirTravel), np = a !== null ? a : b;
         if (a !== null && b !== null && Math.abs(a - pos) > 2.5 * Math.abs(b - pos) && Math.abs(a - pos) > 420) np = b;
         if (np !== null) {
@@ -275,7 +277,11 @@
             if (heading > 0) iv.forEach(function (i) { if (i[0] >= br - 0.5 && i[0] < br + rem && (lim === null || i[0] < lim)) lim = i[0]; });
             else iv.forEach(function (i) { if (i[1] <= bl + 0.5 && i[1] > bl - rem && (lim === null || i[1] > lim)) lim = i[1]; });
           }
-          if (lim === null) { pos += heading * rem; rem = 0; }
+          if (lim === null) {
+            var npx = pos + heading * rem; rem = 0;
+            if (npx < 0 || npx > d.maxX) { npx = clamp(npx, 0, d.maxX); bounce = -bounce; dirFace = -dirFace; }   // chegou ao limite da tela: para ali
+            pos = npx;
+          }
           else if (!RM && !leap && (tgt = clearFrom(heading > 0 ? lim - off - bw + 2 : lim - off - 2, heading)) !== null && Math.abs(tgt - x) > 8) {
             startMove(pickMove(Math.abs(tgt - x)), tgt); pos = tgt; rem = 0;      // obstáculo na frente: passa por cima (pula, escala ou voa)
           }
@@ -284,14 +290,12 @@
             rem -= Math.abs(np2 - pos); pos = np2; bounce = -bounce; heading = -heading; dirFace = heading;
           }
         }
-        pos = clamp(pos, -d.w - 80, vw + 80);
+        pos = clamp(pos, 0, d.maxX);
       }
-      // 3) saiu por um lado da tela: reaparece pelo outro
-      if (!leap && x < -d.w + 2 && pos < x) { x = vw + 2; pos = vw - 10; }            // saiu pela esquerda, entra pela direita
-      else if (!leap && x > vw - 2 && pos > x) { x = -d.w - 2; pos = -d.w + 10; }     // saiu pela direita, entra pela esquerda
+      pos = clamp(pos, 0, d.maxX);                           // fica sempre dentro da página
       // 4) rolagem rápida: voa (jetpack) ou teleporta para outro ponto da tela
       if (fastDir) {
-        if (!RM && !leap && !parked && !drag) { var ft = freeSpot(350, fastDir); if (ft !== null) { startMove(Math.random() < 0.55 ? 'jet' : 'tele', ft); pos = ft; pend = 0; idleW = 0; } }
+        if (!RM && !leap && !parked && !drag) { var fr = Math.random(), ft = fr < 0.7 ? freeSpot(350, fastDir) : null; if (ft !== null) { startMove(fr < 0.3 ? 'tele' : fr < 0.55 ? 'jet' : 'jump', ft); pos = ft; pend = 0; } }
         fastDir = 0;
       }
     }
@@ -318,13 +322,7 @@
       if (now > reactUntil) setPose(WALK[walkF]);
       flip.style.transform = 'scaleX(' + dirFace + ')';
     } else if (!leap) {
-      stillT += dt; idleW += dt;
-      // 5) parado por alguns segundos: sai passeando e faz parkour sozinho
-      if (idleW > wanderIn && shown && !drag && !parked && !RM && !window.INTRO_OPEN && now - lastScrollT > 1500 && !document.hidden) {
-        var wt = freeSpot(300, 0); if (wt !== null) { startMove(pickMove(Math.abs(wt - x)), wt); pos = wt; }
-        else { startMove(['jump', 'jet', 'tele', 'jump'][reactI++ % 4], x); }                 // sem espaço livre: faz o movimento no lugar
-        idleW = 0; wanderIn = 5 + Math.random() * 5;
-      }
+      stillT += dt;
       if (walking && stillT > 0.3) {                                   // parou: pose da seção + um pulinho
         walking = false; flip.style.transform = 'scaleX(1)';
         if (now > reactUntil) { setPose(IDLE[curSec] || 'feliz'); hopNow(); }
