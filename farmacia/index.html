@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Farmácia Vida — modelo de site</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2faf6;--ac:#1a8f4a;--tx:#14382a;--on:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:400 1rem/1.55 Inter,system-ui,sans-serif}
+.wrap{width:min(1040px,calc(100% - 40px));margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.logo{font:700 1.3rem Fraunces,Georgia,serif}.logo small{display:block;font:600 .68rem Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+.badge{font:600 .72rem Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;border:1px solid currentColor;border-radius:999px;padding:.4em .9em;opacity:.75}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:center;padding:clamp(24px,5vw,64px) 0}
+h1{margin:0;font:700 clamp(2rem,5vw,3.6rem)/1.05 Fraunces,Georgia,serif}
+.hero p{font-size:1.1rem;max-width:42ch;opacity:.9}
+.cta{display:inline-block;margin-top:10px;background:var(--ac);color:var(--on);text-decoration:none;font-weight:600;border-radius:999px;padding:.9em 1.6em}
+.art{display:flex;justify-content:center}.art img{width:min(100%,380px);height:auto;filter:drop-shadow(0 18px 24px rgba(0,0,0,.25))}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;padding:8px 0 40px}
+.feat div{border:1px solid color-mix(in srgb,var(--tx) 18%,transparent);border-radius:16px;padding:20px}
+.feat h3{margin:0 0 6px;font:700 1.15rem Fraunces,Georgia,serif;color:var(--ac)}.feat p{margin:0;opacity:.85;font-size:.95rem}
+footer{border-top:1px solid color-mix(in srgb,var(--tx) 15%,transparent);padding:18px 0 28px;font-size:.85rem;opacity:.75}
+@media(max-width:720px){.hero{grid-template-columns:1fr}.art{order:-1}.art img{width:min(70%,260px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo"><small>Farmácia</small>Vida</div><span class="badge">Modelo de demonstração</span></header>
+  <section class="hero">
+    <div><h1>Cuidado perto de você.</h1><p>Serviços, campanhas de saúde e contato rápido com a equipe da farmácia.</p><a class="cta" href="#" onclick="return false">Falar com a farmácia</a></div>
+    <div class="art"><img src="../assets/img/loja-farmacia.webp" alt="Fachada ilustrada da loja"></div>
+  </section>
+  <section class="feat"><div><h3>Serviços</h3><p>Medição de pressão e mais.</p></div><div><h3>Campanhas</h3><p>Saúde o ano todo.</p></div><div><h3>Contato rápido</h3><p>Direto pelo WhatsApp.</p></div></section>
+  <footer>Página provisória, feita pela Forja de inSITES. O site completo deste modelo está em construção.</footer>
+</div>
+</body>
+</html>
