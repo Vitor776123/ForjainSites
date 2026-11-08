@@ -186,16 +186,34 @@
     var pr = vid.play(); if (pr && pr.catch) pr.catch(function () {});
     raf = requestAnimationFrame(tick);
   }
+  // sua voz manda no ritmo: o filme desacelera (ou espera) até a frase terminar, e a próxima só começa depois
+  function voiceBusy() { return CFGN === 'arquivos' && curAud && !curAud.paused && !curAud.ended && !vid.muted; }
+  function pace(t) {
+    if (crashed && !resumed) return false;
+    if (!voiceBusy()) { if (vid.playbackRate !== RATE) vid.playbackRate = RATE; return false; }
+    var k = cueI - 1, g = (k >= 0 && CUES[k + 1]) ? CUES[k + 1].t : END_AT;
+    if (!crashed && g > PAUSE_AT) g = PAUSE_AT;
+    var rem = (isFinite(curAud.duration) ? curAud.duration - curAud.currentTime : 1) + 0.2, room = g - t;
+    if (room <= 0.03) { if (!vid.paused) vid.pause(); return true; }                 // chegou no limite da cena e a voz ainda fala: espera
+    if (vid.paused) { var pp = vid.play(); if (pp && pp.catch) pp.catch(function () {}); }
+    vid.playbackRate = Math.max(0.25, Math.min(RATE, room / rem));
+    return false;
+  }
   function tick() {
     if (!filmOn || ended) return;
     var t = vid.currentTime;
+    if (cueI < CUES.length && CUES[cueI].n && t >= CUES[cueI].t && voiceBusy()) {      // próxima fala só depois da anterior
+      if (!vid.paused) vid.pause(); raf = requestAnimationFrame(tick); return;
+    }
+    if (!crashed || resumed) { if (vid.paused && !voiceBusy() && !endedFilm) { var p3 = vid.play(); if (p3 && p3.catch) p3.catch(function () {}); } }
     while (cueI < CUES.length && t >= CUES[cueI].t) { filmSay(CUES[cueI].say); if (CUES[cueI].n) narrate(CUES[cueI].n); cueI++; }
     if (!crashed && t >= ERR) ferr.classList.add('on');
     if (!crashed && t >= PAUSE_AT) { crash(); return; }          // o laço para aqui até o clique
     if (crashed && resumed && t >= PAUSE_AT + 0.4) ferr.classList.remove('on');
     fchip.classList.toggle('on', t >= 11.3 && t < 13.3);
     forder.classList.toggle('on', t >= 13.5 && t < 15.9);
-    if (t >= END_AT || vid.ended) { endFilm(); return; }
+    if ((t >= END_AT || vid.ended) && !voiceBusy()) { endFilm(); return; }
+    pace(t);
     raf = requestAnimationFrame(tick);
   }
   function setSound(mute) {
