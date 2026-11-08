@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,600&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 
@@ -40,17 +40,20 @@
       <span><kbd>Enter</kbd> entrar na loja</span>
       <span class="hint-sep hint-keys" aria-hidden="true">·</span>
       <span class="hint-keys"><kbd>Espaço</kbd> pular</span>
+      <span class="hint-sep hint-keys" aria-hidden="true">·</span>
+      <span class="hint-keys"><kbd>↓</kbd> atravessar a rua</span>
       <span class="hint-sep hint-touch" aria-hidden="true">·</span>
-      <span class="hint-touch">arraste a tela, toque numa loja ou no robô</span>
+      <span class="hint-touch">arraste a tela · ▼ atravessa a rua</span>
     </div>
 
     <div class="shopcard" id="shopcard" aria-hidden="true"><span class="sc-k"></span><p class="sc-t"></p><button class="sc-b" id="scBtn" type="button" tabindex="-1"></button></div>
 
     <div class="pad" id="pad">
       <button class="pad-btn" id="padL" aria-label="Caminhar para a esquerda">◀</button>
+      <button class="pad-btn pad-r" id="padR" aria-label="Caminhar para a direita">▶</button>
       <button class="pad-act" id="padAct" type="button" hidden>Entrar na loja</button>
-      <button class="pad-btn pad-jump" id="padJump" aria-label="Pular">▲</button>
-      <button class="pad-btn" id="padR" aria-label="Caminhar para a direita">▶</button>
+      <button class="pad-btn pad-down" id="padDown" aria-label="Descer para a rua">▼</button>
+      <button class="pad-btn pad-jump" id="padJump" aria-label="Pular (na rua, subir)">▲</button>
     </div>
 
     <p class="sr-only" id="live" aria-live="polite"></p>
@@ -138,10 +141,10 @@
   <section class="models"><div class="wrap"><h2>Modelos</h2><p class="lead lead-dark">Ative o JavaScript para passear pela rua. Enquanto isso, os modelos estão em /padaria, /adega, /academia e outras pastas.</p></div></section>
 </noscript>
 
-<script src="js/config.js?v=3"></script>
-<script src="js/manifest.js?v=3"></script>
-<script src="js/intro.js?v=3"></script>
-<script src="js/rua.js?v=3"></script>
-<script src="js/companion.js?v=3"></script>
+<script src="js/config.js?v=4"></script>
+<script src="js/manifest.js?v=4"></script>
+<script src="js/intro.js?v=4"></script>
+<script src="js/rua.js?v=4"></script>
+<script src="js/companion.js?v=4"></script>
 </body>
 </html>
