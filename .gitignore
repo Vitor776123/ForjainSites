@@ -1,0 +1,6 @@
+# artes de referência soltas na raiz (o site não usa)
+/*.png
+
+# arquivos do sistema
+Thumbs.db
+.DS_Store
