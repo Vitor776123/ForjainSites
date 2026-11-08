@@ -58,7 +58,8 @@
       pos = 0, x = 0, y = 0, offY = 0,             // pos: onde ele quer estar (px da esquerda); x: onde está desenhado; y/offY: altura (px acima do rodapé)
       bounce = 1, pend = 0, parked = false, parkedScroll = 0, dirTravel = 1, lastSY = window.scrollY,
       vx = 0, lastT = 0, lastScrollT = 0, walkT = 0, walkF = 0, walking = false, stillT = 0,
-      reactUntil = 0, reactI = 0, drag = null, leap = null, arc = 0;
+      reactUntil = 0, reactI = 0, drag = null, leap = null, arc = 0,
+      fastDir = 0, fastCool = 0, lastSyT = 0, idleW = 0, wanderIn = 5;
   var mini = false, mf = 0, mfT = 0, mWalkD = 0, mStill = 0, mSecShown = -1, mLastX = 0, dotsX = [], trackL = 0, trackW = 0;
 
   function setPose(p) {
@@ -187,6 +188,8 @@
   function onScroll() {
     var now = performance.now(); lastScrollT = now;
     var sy = window.scrollY, dy = sy - lastSY; lastSY = sy;
+    var sdt = now - lastSyT; lastSyT = now;
+    if (dy && sdt > 0 && sdt < 200 && Math.abs(dy) / sdt * 1000 > 2200 && now > fastCool) { fastDir = dy > 0 ? 1 : -1; fastCool = now + 2500; }   // rolagem rápida: ele acompanha voando
     if (dy) dirTravel = dy > 0 ? 1 : -1;
     if (window.INTRO_OPEN) return;
     var inHero = inHeroZone();
@@ -240,6 +243,13 @@
     var iv = obstacles(window.innerHeight - d.h - y, window.innerHeight - y);
     function hit(L) { for (var i = 0; i < iv.length; i++) if (L + off < iv[i][1] && L + off + bw > iv[i][0]) return iv[i]; return null; }
     var dragging = drag && drag.moved, heading = 0, px = x;
+    function clearFrom(L, dir) { var I, n = 0; while ((I = hit(L)) && n++ < 10) L = dir > 0 ? I[1] - off : I[0] - off - bw; return (!I && L >= -off && L <= d.maxX) ? L : null; }
+    function freeSpot(minDist, pref) {                       // escolhe um ponto livre da tela para ir
+      var c = [], n = 14, i, L;
+      for (i = 0; i <= n; i++) { L = d.m + (d.maxX - d.m) * i / n; if (!hit(L) && Math.abs(L - x) >= minDist) c.push(L); }
+      if (pref) { var pf = c.filter(function (v) { return (v - x) * pref > 0; }); if (pf.length) c = pf; }
+      return c.length ? c[Math.floor(Math.random() * c.length)] : null;
+    }
 
     if (!dragging) {
       var inside = !!hit(pos);
@@ -258,6 +268,7 @@
       if (pend && !RM) {
         heading = (pend > 0 ? 1 : -1) * bounce;
         var rem = Math.abs(pend) * (vw < 700 ? 0.3 : 0.8), n2 = 0; pend = 0;
+        var tgt;
         while (rem > 0.5 && n2++ < 3) {
           var bl = pos + off, br = bl + bw, lim = null, free = !hit(pos);
           if (free) {
@@ -265,6 +276,9 @@
             else iv.forEach(function (i) { if (i[1] <= bl + 0.5 && i[1] > bl - rem && (lim === null || i[1] > lim)) lim = i[1]; });
           }
           if (lim === null) { pos += heading * rem; rem = 0; }
+          else if (!RM && !leap && (tgt = clearFrom(heading > 0 ? lim - off - bw + 2 : lim - off - 2, heading)) !== null && Math.abs(tgt - x) > 8) {
+            startMove(pickMove(Math.abs(tgt - x)), tgt); pos = tgt; rem = 0;      // obstáculo na frente: passa por cima (pula, escala ou voa)
+          }
           else {
             var np2 = heading > 0 ? lim - off - bw : lim - off;
             rem -= Math.abs(np2 - pos); pos = np2; bounce = -bounce; heading = -heading; dirFace = heading;
@@ -275,12 +289,17 @@
       // 3) saiu por um lado da tela: reaparece pelo outro
       if (!leap && x < -d.w + 2 && pos < x) { x = vw + 2; pos = vw - 10; }            // saiu pela esquerda, entra pela direita
       else if (!leap && x > vw - 2 && pos > x) { x = -d.w - 2; pos = -d.w + 10; }     // saiu pela direita, entra pela esquerda
+      // 4) rolagem rápida: voa (jetpack) ou teleporta para outro ponto da tela
+      if (fastDir) {
+        if (!RM && !leap && !parked && !drag) { var ft = freeSpot(350, fastDir); if (ft !== null) { startMove(Math.random() < 0.55 ? 'jet' : 'tele', ft); pos = ft; pend = 0; idleW = 0; } }
+        fastDir = 0;
+      }
     }
 
     if (dragging) { x = pos; y = ty; arc = 0; leap = null; }
     else if (RM) { pos = clamp(pos, 0, d.maxX); x = pos; y = ty; }
     else if (leap) {
-      leap.t += dt; leap.x1 = pos;
+      leap.t += dt; leap.x1 = pos; idleW = 0;
       stepMove(d, ty, dt);
     } else {
       var dx = pos - x, step = dx * (1 - Math.exp(-dt * 6)), cap = 760 * dt;
@@ -292,14 +311,20 @@
     var moving = !drag && !leap && Math.abs(vx) > 28;
     if (Math.abs(vx) > 28) dirFace = vx > 0 ? 1 : -1;
     if (moving && !RM) {
-      stillT = 0;
+      stillT = 0; idleW = 0;
       if (!walking) { walking = true; walkT = 0; }
       walkT += dt;
       if (walkT > 0.12) { walkT = 0; walkF = (walkF + 1) % 4; }
       if (now > reactUntil) setPose(WALK[walkF]);
       flip.style.transform = 'scaleX(' + dirFace + ')';
     } else if (!leap) {
-      stillT += dt;
+      stillT += dt; idleW += dt;
+      // 5) parado por alguns segundos: sai passeando e faz parkour sozinho
+      if (idleW > wanderIn && shown && !drag && !parked && !RM && !window.INTRO_OPEN && now - lastScrollT > 1500 && !document.hidden) {
+        var wt = freeSpot(300, 0); if (wt !== null) { startMove(pickMove(Math.abs(wt - x)), wt); pos = wt; }
+        else { startMove(['jump', 'jet', 'tele', 'jump'][reactI++ % 4], x); }                 // sem espaço livre: faz o movimento no lugar
+        idleW = 0; wanderIn = 5 + Math.random() * 5;
+      }
       if (walking && stillT > 0.3) {                                   // parou: pose da seção + um pulinho
         walking = false; flip.style.transform = 'scaleX(1)';
         if (now > reactUntil) { setPose(IDLE[curSec] || 'feliz'); hopNow(); }
