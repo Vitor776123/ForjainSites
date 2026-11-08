@@ -411,3 +411,14 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
 .in-sound{position:absolute;left:max(16px,3vw);top:max(16px,3vh);z-index:5;display:none;border:1px solid rgba(244,246,248,.35);border-radius:999px;background:rgba(10,11,13,.6);color:var(--gelo);font:600 .9rem/1 var(--sans);padding:.65em 1.1em;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .intro.film .in-sound{display:block}
 .in-sound:hover,.in-sound:focus-visible{border-color:var(--ciano);color:var(--ciano)}
+
+/* celular: menos coisa na tela */
+@media (hover:none),(max-width:720px){
+  .topbar > .btn{display:none}
+  .hint{display:none}
+  .topbar{gap:8px}
+  .brand{min-width:0;font-size:1rem}
+  .hero-copy{top:clamp(82px,12.5vh,104px)}
+  .hero-copy h1{font-size:clamp(1.55rem,7.2vw,2rem)}
+  .hero-copy .lead{font-size:.86rem;line-height:1.38;max-width:30ch;margin-top:.55rem}
+}
