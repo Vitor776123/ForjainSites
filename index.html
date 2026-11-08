@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Forja de inSITES — sites para o comércio local</title>
-<meta name="description" content="Passeie pela rua com o nosso robô e entre nas lojas: cada uma é um modelo de site feito pela Forja de inSITES.">
+<meta name="description" content="Passeie pela rua com o Forjabô, o nosso robô, e entre nas lojas: cada uma é um modelo de site feito pela Forja de inSITES.">
 <meta name="theme-color" content="#0A0B0D">
 <link rel="icon" href="favicon.ico" sizes="48x48">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png">
@@ -14,12 +14,22 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,600&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
 <header class="topbar">
   <a class="brand" href="#top" aria-label="Forja de inSITES — início"><img class="brand-face" src="assets/img/logo-face.webp" alt="" width="40" height="29" draggable="false"><span>Forja de in<b>SITES</b></span></a>
+  <form class="search" id="search" role="search" autocomplete="off" action="#">
+    <button class="s-open" id="sopen" type="button" aria-label="Buscar o seu tipo de negócio"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+    <div class="s-box">
+      <svg class="s-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <label class="sr-only" for="q">Qual é o seu negócio?</label>
+      <input id="q" type="text" placeholder="Qual é o seu negócio?" enterkeyhint="search" autocomplete="off" autocapitalize="none" spellcheck="false" aria-controls="sres">
+      <button class="s-close" id="sclose" type="button" aria-label="Fechar busca">✕</button>
+    </div>
+    <div class="s-res" id="sres" role="listbox" aria-label="Tipos de negócio" hidden></div>
+  </form>
   <a class="btn btn-cyan" href="#modelos">Ver os modelos</a>
 </header>
 
@@ -31,7 +41,7 @@
     <div class="hero-copy">
       <p class="eyebrow">Sites para o comércio local</p>
       <h1>Seu comércio merece um site à altura.</h1>
-      <p class="lead">Caminhe pela rua com o nosso robô e entre nas lojas: cada uma é um modelo de site que a Forja de inSITES constrói.</p>
+      <p class="lead">Caminhe pela rua com o Forjabô, o nosso robô, e entre nas lojas: cada uma é um modelo de site que a Forja de inSITES constrói.</p>
     </div>
 
     <div class="hint" id="hint" role="note">
@@ -43,17 +53,18 @@
       <span class="hint-sep hint-keys" aria-hidden="true">·</span>
       <span class="hint-keys"><kbd>↓</kbd> atravessar a rua</span>
       <span class="hint-sep hint-touch" aria-hidden="true">·</span>
-      <span class="hint-touch">arraste a tela · ▼ atravessa a rua</span>
+      <span class="hint-touch">direcional: andar · ▲ pular · ▼ atravessar a rua</span>
     </div>
 
     <div class="shopcard" id="shopcard" aria-hidden="true"><span class="sc-k"></span><p class="sc-t"></p><button class="sc-b" id="scBtn" type="button" tabindex="-1"></button></div>
 
     <div class="pad" id="pad">
-      <button class="pad-btn" id="padL" aria-label="Caminhar para a esquerda">◀</button>
-      <button class="pad-btn pad-r" id="padR" aria-label="Caminhar para a direita">▶</button>
+      <div class="stick" id="stick" role="group" aria-label="Direcional: arraste para caminhar, empurre para cima para pular, para baixo para descer à rua">
+        <span class="st-a st-u" aria-hidden="true">▲</span><span class="st-a st-d" aria-hidden="true">▼</span><span class="st-a st-l" aria-hidden="true">◀</span><span class="st-a st-r" aria-hidden="true">▶</span>
+        <div class="stick-knob" id="stickKnob"></div>
+      </div>
       <button class="pad-act" id="padAct" type="button" hidden>Entrar na loja</button>
-      <button class="pad-btn pad-down" id="padDown" aria-label="Descer para a rua">▼</button>
-      <button class="pad-btn pad-jump" id="padJump" aria-label="Pular (na rua, subir)">▲</button>
+      <button class="pad-jump" id="padJump" type="button" aria-label="Pular"><span aria-hidden="true">PULAR</span></button>
     </div>
 
     <p class="sr-only" id="live" aria-live="polite"></p>
@@ -141,10 +152,12 @@
   <section class="models"><div class="wrap"><h2>Modelos</h2><p class="lead lead-dark">Ative o JavaScript para passear pela rua. Enquanto isso, os modelos estão em /padaria, /adega, /academia e outras pastas.</p></div></section>
 </noscript>
 
-<script src="js/config.js?v=4"></script>
-<script src="js/manifest.js?v=4"></script>
-<script src="js/intro.js?v=4"></script>
-<script src="js/rua.js?v=4"></script>
-<script src="js/companion.js?v=4"></script>
+<script src="js/config.js?v=5"></script>
+<script src="js/manifest.js?v=5"></script>
+<script src="js/poses.js?v=5"></script>
+<script src="js/intro.js?v=5"></script>
+<script src="js/rua.js?v=5"></script>
+<script src="js/companion.js?v=5"></script>
+<script src="js/busca.js?v=5"></script>
 </body>
 </html>
