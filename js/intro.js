@@ -37,8 +37,10 @@
     '<div class="in-film" aria-hidden="true"><div class="film-stage">' +
       '<video class="film-vid" playsinline preload="auto" poster="assets/video/intro-poster.jpg" src="assets/video/intro.mp4"></video>' +
       '<div class="film-err"><div class="fe-bar"><i></i><i></i><i></i></div><div class="fe-body"><span class="fe-x">&#10005;</span><b>Site indisponível ainda</b><small>Esta loja ainda não tem site.</small></div></div>' +
+      '<div class="film-err film-pop" style="left:51%;top:34%;width:30%"><div class="fe-bar"><i></i><i></i><i></i></div><div class="fe-body"><span class="fe-x">&#10005;</span><b>Não achei o que eu queria</b></div></div>' +
+      '<div class="film-err film-pop" style="left:57%;top:55%;width:34%"><div class="fe-bar"><i></i><i></i><i></i></div><div class="fe-body"><span class="fe-x">&#10005;</span><b>Sem cardápio, horário ou contato</b></div></div>' +
       '<div class="film-chip">&#10003; Site no ar</div>' +
-      '<div class="film-order"><span class="fo-ok">&#10003;</span><div><b>Pedido feito!</b><small>Vinho &amp; Prosa</small></div></div>' +
+      '<div class="film-order"><span class="fo-ok">&#10003;</span><div><b>Pedido feito!</b><small>Pão Quente</small></div></div>' +
     '</div><p class="sc-cap film-cap" aria-live="polite"></p>' +
     '<button type="button" class="film-on" hidden>Ligar o site <span aria-hidden="true">&#8594;</span></button>' +
     '<div class="film-flash"></div></div>' +
@@ -50,7 +52,7 @@
       cap = root.querySelector('.sc-cap'), go = root.querySelector('.in-go'), skip = root.querySelector('.in-skip'),
       conf = root.querySelector('.sc-confetti'), vid = root.querySelector('.film-vid'), fcap = root.querySelector('.film-cap'),
       ferr = root.querySelector('.film-err'), fflash = root.querySelector('.film-flash'), snd = root.querySelector('.in-sound'),
-      fchip = root.querySelector('.film-chip'), forder = root.querySelector('.film-order'), fon = root.querySelector('.film-on');
+      pops = [].slice.call(root.querySelectorAll('.film-pop')), fchip = root.querySelector('.film-chip'), forder = root.querySelector('.film-order'), fon = root.querySelector('.film-on');
   var timers = [], walkIv = 0, ended = false;
   var later = function (fn, ms) { timers.push(setTimeout(fn, ms)); };
   var pose = function (p) { robot.dataset.pose = p; };
@@ -104,7 +106,7 @@
     final:   'Agora é a sua vez. Entre nas lojas.'
   };
   var FILES = { procura: 1, semsite: 2, queda: 3, acende: 4, venda: 5, final: 6 };
-  var BG_VOL = 0.28, BG_DUCK = 0.08;        // som do filme baixo, e mais baixo ainda enquanto a voz fala
+  var BG_VOL = CFGN === 'arquivos' || CFGN === 'voz' ? 0.28 : 0.75, BG_DUCK = 0.08;        // som do filme baixo, e mais baixo ainda enquanto a voz fala
   var auds = {}, ttsVoice = null, duckIv = 0, duckT = 0, curAud = null;
   function loadVoices() {
     if (!window.speechSynthesis) return;
@@ -153,14 +155,16 @@
 
   // ---- abertura em vídeo (3 cenas coladas): túnel -> robô triste diante da loja apagada -> PAUSA: "Ligar o site" -> loja acende e a venda acontece ----
   var RATE = 0.88;                            // um pouco mais devagar, para dar tempo de ler e ouvir
-  var CUES = [   // segundos do vídeo
-    { t: 0.9,  say: 'Seu cliente procura o seu negócio…', n: 'procura' },
-    { t: 3.9,  say: '' },
-    { t: 6.3,  say: '…e não encontra nenhum site.', n: 'semsite' },
-    { t: 10.9, say: 'Até que um site acende.', n: 'acende' },
-    { t: 13.0, say: 'E a venda acontece.', n: 'venda' },
-    { t: 15.2, say: 'Agora é a sua vez: entre nas lojas.', n: 'final' }
-  ], ERR = 7.0, PAUSE_AT = 8.2, END_AT = 16.45;
+  var CUES = [   // segundos do vídeo (legendas; sem narração em áudio)
+    { t: 0.6,  say: 'Seu cliente procura o seu negócio…' },
+    { t: 3.4,  say: '…e não encontra nenhum site.' },
+    { t: 7.9,  say: '' },
+    { t: 11.5, say: 'Até que alguém constrói o site.' },
+    { t: 14.3, say: 'A Forja de inSITES entra em ação.' },
+    { t: 17.2, say: 'Um site acende.' },
+    { t: 22.0, say: 'E a venda acontece.' },
+    { t: 24.7, say: 'Agora é a sua vez: entre nas lojas.' }
+  ], ERR = 8.2, PAUSE_AT = 10.9, END_AT = 28.5, POPS = [9.0, 9.8];
   var filmOn = false, cueI = 0, raf = 0, endedFilm = false, crashed = false, resumed = false;
   function filmSay(t) { fcap.classList.remove('on'); if (t) setTimeout(function () { fcap.textContent = t; fcap.classList.add('on'); }, 140); }
   function useCoded() {
@@ -179,7 +183,7 @@
   }
   function resume() {
     if (resumed || ended) return; resumed = true;
-    fon.classList.remove('on'); fon.hidden = true; ferr.classList.remove('on');
+    fon.classList.remove('on'); fon.hidden = true; ferr.classList.remove('on'); pops.forEach(function (e) { e.classList.remove('on'); });
     fflash.classList.remove('on'); root.classList.add('lit');
     setTimeout(function () { root.classList.remove('lit'); }, 700);
     filmSay(''); vid.playbackRate = RATE;
@@ -208,10 +212,11 @@
     if (!crashed || resumed) { if (vid.paused && !voiceBusy() && !endedFilm) { var p3 = vid.play(); if (p3 && p3.catch) p3.catch(function () {}); } }
     while (cueI < CUES.length && t >= CUES[cueI].t) { filmSay(CUES[cueI].say); if (CUES[cueI].n) narrate(CUES[cueI].n); cueI++; }
     if (!crashed && t >= ERR) ferr.classList.add('on');
+    pops.forEach(function (e, i) { if (!resumed && t >= POPS[i]) e.classList.add('on'); });
     if (!crashed && t >= PAUSE_AT) { crash(); return; }          // o laço para aqui até o clique
     if (crashed && resumed && t >= PAUSE_AT + 0.4) ferr.classList.remove('on');
-    fchip.classList.toggle('on', t >= 11.3 && t < 13.3);
-    forder.classList.toggle('on', t >= 13.5 && t < 15.9);
+    fchip.classList.toggle('on', t >= 18.6 && t < 21.6);
+    forder.classList.toggle('on', t >= 22.9 && t < 24.6);
     if ((t >= END_AT || vid.ended) && !voiceBusy()) { endFilm(); return; }
     pace(t);
     raf = requestAnimationFrame(tick);
