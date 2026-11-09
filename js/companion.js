@@ -11,8 +11,8 @@
   var IMG = function (n) { return 'assets/img/robo-' + n + '.webp'; };
   var PM = window.POSES || {};
   // pose de descanso por seção (só poses que fazem sentido sozinhas, sem "apresentar o nada")
-  var IDLE = { dor: 'pensativo', modelos: 'joinha', quem: 'jet-pairando', como: 'apontando', contato: 'danca' };
-  var REACT = ['joinha', 'feliz', 'comemorando', 'danca', 'estrela'];
+  var IDLE = { dor: 'joinha', modelos: 'joinha', quem: 'joinha', como: 'joinha', contato: 'joinha' };   // pose de espera: sempre o joinha
+  var REACT = ['joinha', 'comemorando', 'danca', 'estrela'];
   var WALK = ['andando-1', 'andando-2', 'andando-3', 'andando-4'];
   var ALL = ['triste', 'apontando', 'feliz', 'comemorando', 'joinha', 'danca', 'estrela', 'pensativo', 'agachado', 'escalando', 'teleporte', 'aparecendo', 'jet-subindo', 'jet-voando', 'jet-pousando', 'jet-pairando'].concat(WALK);
   var NOZ = { 'jet-pairando': [[[.16,.61]], [-.12,1]], 'jet-subindo': [[[.16,.6],[.29,.6]], [0,1]], 'jet-voando': [[[.1,.43],[.16,.5]], [-.78,.62]], 'jet-pousando': [[[.15,.4],[.25,.4]], [-.1,1]] };
@@ -89,7 +89,7 @@
     var top = Math.max(0, d.maxY - 76), lo = Math.min(top, window.innerHeight * 0.16), sp;
     function newHome() { mHome = Math.round(lo + Math.random() * Math.max(0, Math.min(top, window.innerHeight * 0.58) - lo)); }
     if (pick === 'emote') {
-      var em = ['joinha', 'feliz', 'comemorando', 'danca', 'estrela', 'apontando', 'pensativo'];
+      var em = ['joinha', 'comemorando', 'danca', 'estrela', 'apontando', 'pensativo'];
       setPose(em[Math.floor(Math.random() * em.length)]); reactUntil = now + 1500 + Math.random() * 900; holdUntil = reactUntil; walking = false; hopNow();
     } else if (pick === 'hop') { startMove('jump', x); }
     else if (pick === 'jetmove') { newHome(); flyOn = true; flyBack = true; flyUntil = 0; offY = mHome; }
@@ -171,7 +171,7 @@
     }
     arc = Math.min(arc, Math.max(0, d.maxY - y));
     y += (ty - y) * (1 - Math.exp(-dt * 8));
-    if (L.t >= D) { leap = null; arc = 0; flip.style.opacity = 1; flame(false); flip.style.transform = 'scaleX(' + faceTo + ')'; setPose(IDLE[curSec] || 'feliz'); hopNow(); }
+    if (L.t >= D) { leap = null; arc = 0; flip.style.opacity = 1; flame(false); flip.style.transform = 'scaleX(' + faceTo + ')'; setPose(IDLE[curSec] || 'joinha'); hopNow(); }
   }
 
   // ---- modo celular: mini robô sobre a pista de progresso ----
@@ -199,7 +199,7 @@
     mini = m; box.classList.toggle('mini', mini); track.classList.toggle('on', mini && shown); document.body.classList.toggle('mini-on', mini);
     walking = false; leap = null; drag = null; box.classList.remove('dragging'); flip.style.transform = 'scaleX(1)'; flip.style.opacity = 1; flame(false);
     if (mini) { layoutTrack(); mf = mfT = progress(); }
-    var d = dims(); pos = d.m; x = pos; offY = y = clamp(homeY(), 0, d.maxY); parked = false; setPose(IDLE[curSec] || 'feliz');
+    var d = dims(); pos = d.m; x = pos; offY = y = clamp(homeY(), 0, d.maxY); parked = false; setPose(IDLE[curSec] || 'joinha');
   }
   function paintTrack(f, cx) {
     var dots = track.querySelectorAll('.pt-dot'), near = Math.round(f);
@@ -231,7 +231,7 @@
         perch = null; pendPose = null; var d = dims(); pos = d.m; x = d.m; offY = homeY(); y = offY; bounce = 1; pend = 0; parked = false; leap = null; flip.style.opacity = 1; flame(false); dirFace = 1;
         if (!RM) { leap = { type: 'tele', x0: x, x1: x, t: 0.45, dur: 1.0, dir: 1, dist: 0 }; flip.style.opacity = 0; }   // aparece na tela, sem entrar pelo canto
         if (mini) { layoutTrack(); mfT = mf = progress(); }
-        setPose(IDLE[curSec] || 'feliz');
+        setPose(IDLE[curSec] || 'joinha');
       }
       return;
     }
@@ -254,9 +254,9 @@
       mStill += dt;
       if (walking && mStill > 0.3) {                                   // parou: pose da seção + um pulinho
         walking = false; flip.style.transform = 'scaleX(1)';
-        if (now > reactUntil) { setPose(IDLE[curSec] || 'feliz'); hopNow(); }
+        if (now > reactUntil) { setPose(IDLE[curSec] || 'joinha'); hopNow(); }
       }
-      if (!walking && reactUntil && now > reactUntil) { reactUntil = 0; setPose(IDLE[curSec] || 'feliz'); }
+      if (!walking && reactUntil && now > reactUntil) { reactUntil = 0; setPose(IDLE[curSec] || 'joinha'); }
     }
     box.style.transform = 'translate3d(' + x.toFixed(1) + 'px,0,0)';
     paintTrack(mfT, x + 23);
@@ -389,7 +389,7 @@
     // andando = está se movendo; a animação é por tempo
     if (flyOn && !leap && !drag) {                                   // voando com o jetpack: a pose segue o movimento vertical
       var vy = dt ? (y - prevY) / dt : 0;
-      if (flyBack && Math.abs(y - homeY()) < 6) { flyOn = false; flyBack = false; flame(false); flip.style.transform = 'scaleX(' + faceTo + ')'; setPose(IDLE[curSec] || 'feliz'); hopNow(); }
+      if (flyBack && Math.abs(y - homeY()) < 6) { flyOn = false; flyBack = false; flame(false); flip.style.transform = 'scaleX(' + faceTo + ')'; setPose(IDLE[curSec] || 'joinha'); hopNow(); }
       else { var jp = vy > 40 ? 'jet-subindo' : vy < -40 ? 'jet-pousando' : 'jet-pairando'; setPose(jp); flame(true, jp, jp === 'jet-pousando' ? 0.6 : 1); flip.style.transform = 'scaleX(' + dirFace + ')'; walking = false; }
     }
     prevY = y;
@@ -410,9 +410,9 @@
       stillT += dt;
       if (walking && stillT > 0.3) {                                   // parou: pose da seção + um pulinho
         walking = false; flip.style.transform = 'scaleX(' + faceTo + ')';
-        if (now > reactUntil) { setPose(IDLE[curSec] || 'feliz'); hopNow(); }
+        if (now > reactUntil) { setPose(IDLE[curSec] || 'joinha'); hopNow(); }
       }
-      if (!walking && !drag && reactUntil && now > reactUntil) { reactUntil = 0; setPose(IDLE[curSec] || 'feliz'); }
+      if (!walking && !drag && reactUntil && now > reactUntil) { reactUntil = 0; setPose(IDLE[curSec] || 'joinha'); }
     }
     if (!leap && !flyOn && !clingOn) {
       flame(pose === 'jet-pairando', pose, 1);                       // parado voando: jetpack aceso e pairando
@@ -431,7 +431,7 @@
     if (!drag || e.pointerId !== drag.id) return;
     var dx = e.clientX - drag.px, dy = e.clientY - drag.py, d = dims();
     if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 6) return;
-    if (!drag.moved) { drag.moved = true; flyOn = false; flyBack = false; box.classList.add('dragging'); walking = false; leap = null; flame(false); flip.style.opacity = 1; flip.style.transform = 'scaleX(1)'; reactUntil = 0; setPose(IDLE[curSec] || 'feliz'); }
+    if (!drag.moved) { drag.moved = true; flyOn = false; flyBack = false; box.classList.add('dragging'); walking = false; leap = null; flame(false); flip.style.opacity = 1; flip.style.transform = 'scaleX(1)'; reactUntil = 0; setPose(IDLE[curSec] || 'joinha'); }
     pos = clamp(drag.ox + dx, 0, d.maxX); offY = clamp(drag.oy - dy, 0, d.maxY);
     e.preventDefault();
   });
@@ -439,7 +439,7 @@
     if (!drag || (e && e.pointerId !== drag.id)) return;
     var moved = drag.moved; drag = null; box.classList.remove('dragging');
     var now = performance.now();
-    if (moved) { parked = true; parkedScroll = 0; reactUntil = 0; setPose(IDLE[curSec] || 'feliz'); hopNow(); }   // onde você soltar, ele fica
+    if (moved) { parked = true; parkedScroll = 0; reactUntil = 0; setPose(IDLE[curSec] || 'joinha'); hopNow(); }   // onde você soltar, ele fica
     else if (!RM && !leap) { var tp = ['jump', 'jet', 'tele', 'jump'][reactI++ % 4]; startMove(tp, x); }
     else { reactI = (reactI + 1) % REACT.length; setPose(REACT[reactI]); reactUntil = now + 1800; hopNow(); }
   }
@@ -476,7 +476,8 @@
       if (land && shown && !RM && !leap) { flyOn = true; flyBack = true; flyUntil = 0; }
       offY = homeY();
     },
-    perched: function () { return !!perch; }
+    perched: function () { return !!perch; },
+    el: function () { return perch ? perch.el : null; }
   };
-  setPose('feliz'); setMode(); onScroll(); requestAnimationFrame(loop);
+  setPose('joinha'); setMode(); onScroll(); requestAnimationFrame(loop);
 })();

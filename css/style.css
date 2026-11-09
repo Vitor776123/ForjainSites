@@ -471,3 +471,4 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
 .rv-on .rv{opacity:0;transform:translate3d(var(--rvx,0),22px,0) scale(.97);transition:opacity .55s ease,transform .6s cubic-bezier(.2,.9,.3,1.15)}
 .rv-on .rv.rv-in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.rv-on .rv{opacity:1;transform:none;transition:none}}
+#grid{display:none}

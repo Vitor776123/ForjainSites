@@ -44,7 +44,7 @@
     else Buddy.goTo(el, { pose: pose, secs: 2.6, lift: -4 });
     return true;
   }
-  function pickShop(i, byUser) { cur = i; render(); if (byUser) robot(chips[i], 'feliz'); }
+  function pickShop(i, byUser) { cur = i; render(); if (byUser) robot(chips[i], 'joinha'); }
   function pickPk(i, byUser) { pk = i; render(); if (byUser) robot(pks[i], PK[i].pose); }
   var openBtn = st.querySelector('.pl-open');
   function open() { F.open(cur, pk + 1); }
@@ -53,21 +53,16 @@
     var c = e.target.closest('.pl-chip'), p = e.target.closest('.pl-pk');
     if (c) pickShop(+c.dataset.i, true); else if (p) pickPk(+p.dataset.p, true);
     else if (e.target.closest('.pl-open')) open();
-    clearTimeout(timer); timer = 0;
   });
   render();
 
-  // demonstração: quando o palco aparece, o robô passeia pelos botões (uma vez); qualquer toque do visitante interrompe
-  var done = false;
-  function demo() {
-    if (done || RM || !window.Buddy || !Buddy.ready()) return; done = true;
-    var seq = [[function () { pickShop(1); robot(chips[1], 'feliz'); }, 600], [function () { pickPk(1); robot(pks[1], 'apontando'); }, 2300],
-               [function () { pickPk(2); robot(pks[2], 'comemorando'); }, 2300], [function () { robot(openBtn, 'joinha'); }, 2300],
-               [function () { Buddy.release(true); }, 2600]];
-    var k = 0;
-    (function next() { if (k >= seq.length) return; var s = seq[k++]; timer = setTimeout(function () { s[0](); next(); }, s[1]); })();
-  }
-  if ('IntersectionObserver' in window) new IntersectionObserver(function (en, o) {
-    if (en[0].isIntersecting && en[0].intersectionRatio > .6) { o.disconnect(); setTimeout(demo, 500); }
-  }, { threshold: [.6] }).observe(st);
+  // ao chegar no palco, o robô sobe direto no botão selecionado (pacote) e fica lá; se o visitante clicar, ele vai até o clicado
+  var inView = false;
+  function arrive() { if (!window.Buddy || !Buddy.ready() || Buddy.perched()) return; robot(pks[pk], 'joinha'); }
+  if ('IntersectionObserver' in window) new IntersectionObserver(function (en) {
+    var on = en[0].isIntersecting; if (on === inView) return; inView = on;
+    if (on) timer = setTimeout(arrive, RM ? 0 : 700);
+    else { clearTimeout(timer); if (window.Buddy && Buddy.perched() && st.contains(Buddy.el && Buddy.el())) Buddy.release(true); }
+  }, { threshold: .35 }).observe(st);
+  window.addEventListener('scroll', function () { if (inView && window.Buddy && Buddy.ready() && !Buddy.perched()) { clearTimeout(timer); timer = setTimeout(arrive, 900); } }, { passive: true });
 })();
