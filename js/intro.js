@@ -163,8 +163,8 @@
     { t: 14.3, say: 'A Forja de inSITES entra em ação.' },
     { t: 17.2, say: 'Um site acende.' },
     { t: 22.0, say: 'E a venda acontece.' },
-    { t: 24.7, say: 'Agora é a sua vez: entre nas lojas.' }
-  ], ERR = 8.2, PAUSE_AT = 10.9, END_AT = 28.5, POPS = [9.0, 9.8];
+    { t: 25.4, say: 'Agora é a sua vez: entre nas lojas.' }
+  ], ERR = 8.2, PAUSE_AT = 10.9, END_AT = 34.3, POPS = [9.0, 9.8];
   var filmOn = false, cueI = 0, raf = 0, endedFilm = false, crashed = false, resumed = false;
   function filmSay(t) { fcap.classList.remove('on'); if (t) setTimeout(function () { fcap.textContent = t; fcap.classList.add('on'); }, 140); }
   function useCoded() {
