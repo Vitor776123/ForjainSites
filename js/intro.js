@@ -35,7 +35,7 @@
       '<p class="sc-cap" aria-live="polite"></p>' +
     '</div>' +
     '<div class="in-film" aria-hidden="true"><div class="film-stage">' +
-      '<video class="film-vid" playsinline preload="auto" poster="assets/video/intro-poster.jpg" src="assets/video/intro.mp4"></video>' +
+      '<video class="film-vid" playsinline preload="auto" poster="assets/video/intro-poster.jpg?v=2b" src="assets/video/intro.mp4?v=2b"></video>' +
       '<div class="film-err"><div class="fe-bar"><i></i><i></i><i></i></div><div class="fe-body"><span class="fe-x">&#10005;</span><b>Site indisponível ainda</b><small>Esta loja ainda não tem site.</small></div></div>' +
       '<div class="film-err film-pop" style="left:51%;top:34%;width:30%"><div class="fe-bar"><i></i><i></i><i></i></div><div class="fe-body"><span class="fe-x">&#10005;</span><b>Não achei o que eu queria</b></div></div>' +
       '<div class="film-err film-pop" style="left:57%;top:55%;width:34%"><div class="fe-bar"><i></i><i></i><i></i></div><div class="fe-body"><span class="fe-x">&#10005;</span><b>Sem cardápio, horário ou contato</b></div></div>' +
@@ -163,8 +163,8 @@
     { t: 14.3, say: 'A Forja de inSITES entra em ação.' },
     { t: 17.2, say: 'Um site acende.' },
     { t: 22.0, say: 'E a venda acontece.' },
-    { t: 25.4, say: 'Agora é a sua vez: entre nas lojas.' }
-  ], ERR = 8.2, PAUSE_AT = 10.9, END_AT = 34.3, POPS = [9.0, 9.8];
+    { t: 24.7, say: 'Agora é a sua vez: entre nas lojas.' }
+  ], ERR = 8.2, PAUSE_AT = 10.9, END_AT = 28.5, POPS = [9.0, 9.8];
   var filmOn = false, cueI = 0, raf = 0, endedFilm = false, crashed = false, resumed = false;
   function filmSay(t) { fcap.classList.remove('on'); if (t) setTimeout(function () { fcap.textContent = t; fcap.classList.add('on'); }, 140); }
   function useCoded() {
