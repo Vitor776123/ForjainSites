@@ -6,7 +6,7 @@
   var IMG = function (slug) { return 'assets/img/loja-' + slug + '.webp'; };
   var PK = [
     { n: 'Essencial', d: 'Site estático, direto ao ponto: a base para estar no Google e no WhatsApp.', pose: 'joinha' },
-    { n: 'Movimento', d: 'Entrada com animação e GIF no topo: o site já chama atenção de cara.', pose: 'apontando' },
+    { n: 'Movimento', d: 'Entrada com animação e GIF no topo: o site já chama atenção de cara.', pose: 'pensativo' },
     { n: 'Com mascote', d: 'Um mascote com personalidade guia o cliente pelo site, como o Forjabô.', pose: 'comemorando' }
   ];
   var cur = 0, pk = 0, timer = 0;

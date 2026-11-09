@@ -89,7 +89,7 @@
     var top = Math.max(0, d.maxY - 76), lo = Math.min(top, window.innerHeight * 0.16), sp;
     function newHome() { mHome = Math.round(lo + Math.random() * Math.max(0, Math.min(top, window.innerHeight * 0.58) - lo)); }
     if (pick === 'emote') {
-      var em = ['joinha', 'comemorando', 'danca', 'estrela', 'apontando', 'pensativo'];
+      var em = ['joinha', 'comemorando', 'danca', 'estrela', 'pensativo'];
       setPose(em[Math.floor(Math.random() * em.length)]); reactUntil = now + 1500 + Math.random() * 900; holdUntil = reactUntil; walking = false; hopNow();
     } else if (pick === 'hop') { startMove('jump', x); }
     else if (pick === 'jetmove') { newHome(); flyOn = true; flyBack = true; flyUntil = 0; offY = mHome; }
@@ -475,6 +475,16 @@
       perch = null; pendPose = null;
       if (land && shown && !RM && !leap) { flyOn = true; flyBack = true; flyUntil = 0; }
       offY = homeY();
+    },
+    roam: function (o) {                                      // brincar solto: pula / voa / teleporta / escala para outro ponto da tela
+      o = o || {};
+      if (!shown || hidden || window.INTRO_OPEN || leap || perch || RM || (drag && drag.moved)) return false;
+      var d = dims(), mv = ['jump', 'jet', 'tele', 'climb', 'jet'][Math.floor(Math.random() * 5)], tx, tries = 0;
+      do { tx = mv === 'climb' ? (Math.random() < .5 ? 6 : d.maxX - 6) : d.m + Math.random() * (d.maxX - d.m); } while (Math.abs(tx - x) < 160 && ++tries < 8);
+      parked = false; pend = 0; startMove(mv, tx); pos = tx;
+      var dur = mv === 'tele' ? 1050 : mv === 'jet' ? 1500 : mv === 'climb' ? 1800 : 900;
+      pendPose = { pose: o.pose || 'joinha', secs: o.secs || 2, face: 0, at: performance.now() + dur };
+      return true;
     },
     perched: function () { return !!perch; },
     el: function () { return perch ? perch.el : null; }
