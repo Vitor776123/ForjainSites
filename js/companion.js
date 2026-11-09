@@ -14,7 +14,7 @@
   var IDLE = { dor: 'joinha', modelos: 'joinha', quem: 'joinha', como: 'joinha', contato: 'joinha' };   // pose de espera: sempre o joinha
   var REACT = ['joinha', 'comemorando', 'danca', 'estrela'];
   var WALK = ['andando-1', 'andando-2', 'andando-3', 'andando-4'];
-  var ALL = ['triste', 'apontando', 'feliz', 'comemorando', 'joinha', 'danca', 'estrela', 'pensativo', 'agachado', 'escalando', 'teleporte', 'aparecendo', 'jet-subindo', 'jet-voando', 'jet-pousando', 'jet-pairando'].concat(WALK);
+  var ALL = ['triste', 'apontando', 'feliz', 'comemorando', 'joinha', 'danca', 'estrela', 'pensativo', 'agachado', 'escalando', 'teleporte', 'aparecendo', 'jet-subindo', 'jet-voando', 'jet-pousando', 'jet-pairando', 'mortal', 'rampa', 'derrapando', 'pendurado', 'espiando', 'tonto', 'caindo', 'levantando'].concat(WALK);
   var NOZ = { 'jet-pairando': [[[.16,.61]], [-.12,1]], 'jet-subindo': [[[.16,.6],[.29,.6]], [0,1]], 'jet-voando': [[[.1,.43],[.16,.5]], [-.78,.62]], 'jet-pousando': [[[.15,.4],[.25,.4]], [-.1,1]] };
   var LABELS = ['A dor', 'Modelos', 'Quem sou', 'Como', 'Contato'];
   var mq = window.matchMedia ? matchMedia('(hover:none),(max-width:720px)') : { matches: false };
@@ -136,23 +136,26 @@
     return lastMove = t;
   }
   function startMove(type, x1) {
-    var dist = Math.abs(x1 - x), dur = type === 'jump' ? clamp(dist / 900, 0.5, 0.9) + 0.36 : type === 'jet' ? clamp(dist / 650, 0.7, 1.5) + 0.7 : type === 'tele' ? 1.0 : 0.85 + clamp(dist / 900, 0.5, 0.8) + 0.22;
+    var dist = Math.abs(x1 - x), dur = type === 'tramp' ? 2.3 : type === 'slide' ? 1.4 : type === 'drop' ? 1.45 : type === 'flip' ? clamp(dist / 900, 0.5, 0.9) + 0.6 : type === 'jump' ? clamp(dist / 900, 0.5, 0.9) + 0.36 : type === 'jet' ? clamp(dist / 650, 0.7, 1.5) + 0.7 : type === 'tele' ? 1.0 : 0.85 + clamp(dist / 900, 0.5, 0.8) + 0.22;
     flyOn = false; flyBack = false; cling = null; box.classList.remove('sliding');
     if (!perchKeep) { perch = null; if (!mini && offY > homeY()) offY = homeY(); }
-    leap = { type: type, x0: x, x1: x1, t: 0, dur: dur, dir: x1 >= x ? 1 : -1, dist: dist };
+    leap = { type: type, x0: x, x1: x1, t: 0, dur: dur, dir: x1 >= x ? 1 : -1, dist: dist, y0: y };
     reactUntil = 0; walking = false;
   }
   function ez(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
   function airP(p) { return p < 0.22 || p > 0.74 ? 'comemorando' : 'estrela'; }
   function stepMove(d, ty, dt) {              // devolve a nova posição/altura/pose do movimento em curso
     var L = leap, t = L.t, D = L.dur, a = L.x1;
-    flip.style.transform = 'scaleX(' + L.dir + ')'; flip.style.opacity = 1; arc = 0; flame(false);
-    if (L.type === 'jump') {
+    flip.style.transform = 'scaleX(' + L.dir + ')'; flip.style.opacity = 1; flip.style.transition = ''; flip.style.transformOrigin = ''; arc = 0; flame(false);
+    var noEase = false;
+    function spin(deg, org) { flip.style.transition = 'none'; flip.style.transformOrigin = org || '50% 72%'; flip.style.transform = 'scaleX(' + L.dir + ') rotate(' + (L.dir * deg).toFixed(0) + 'deg)'; }
+    if (L.type === 'jump' || L.type === 'flip') {
       var an = 0.14, ld = 0.22, fl = D - an - ld;
       if (t < an) { setPose('agachado'); x = L.x0; }
       else if (t < an + fl) {
         var p = (t - an) / fl, H = clamp(L.dist * 0.16 + 80, 90, 170);
-        x = L.x0 + (a - L.x0) * ez(p); arc = 4 * H * p * (1 - p); setPose(airP(p));
+        x = L.x0 + (a - L.x0) * ez(p); arc = 4 * H * p * (1 - p);
+        if (L.type === 'flip') { setPose('mortal'); spin(360 * ez(Math.min(1, p * 1.05))); } else setPose(airP(p));
       } else { x = a; setPose('agachado'); }
     } else if (L.type === 'jet') {
       var up = 0.26 * D, dn = 0.28 * D, hh = clamp(d.h * 0.85, 90, 190);
@@ -163,6 +166,30 @@
     } else if (L.type === 'tele') {
       if (t < 0.45) { x = L.x0; setPose('teleporte'); flip.style.opacity = Math.max(0, 1 - t / 0.45).toFixed(2); }
       else { x = a; setPose('aparecendo'); flip.style.opacity = Math.min(1, (t - 0.45) / 0.4).toFixed(2); }
+    } else if (L.type === 'tramp') {           // trampolim: três pulos cada vez mais altos; o último é um mortal; termina tonto
+      var SQ = [[0.1, 0.36, 62], [0.1, 0.44, 108], [0.1, 0.62, 175]], tt = t, dn2 = false;
+      x = a;
+      for (var si = 0; si < 3 && !dn2; si++) {
+        var c0 = SQ[si][0], a0 = SQ[si][1];
+        if (tt < c0) { setPose('agachado'); dn2 = true; }
+        else if (tt < c0 + a0) {
+          var pp = (tt - c0) / a0; arc = 4 * SQ[si][2] * pp * (1 - pp); dn2 = true;
+          if (si < 2) setPose(pp < 0.5 ? 'comemorando' : 'estrela'); else { setPose('mortal'); spin(360 * ez(pp)); }
+        } else tt -= c0 + a0;
+      }
+      if (!dn2) setPose('tonto');
+    } else if (L.type === 'slide') {           // desliza do alto do bloco até o chão, derrapando no fim
+      var sp0 = clamp(t / (D - 0.28), 0, 1), yg = homeY();
+      x = L.x0 + (a - L.x0) * sp0; y = L.y0 + (yg - L.y0) * sp0 * sp0; noEase = true;
+      if (sp0 < 0.82) { setPose('rampa'); flip.style.transform = 'scaleX(' + L.dir + ') rotate(' + (L.dir * 10) + 'deg)'; flip.style.transformOrigin = '50% 80%'; }
+      else setPose('derrapando');
+      if (t >= D - 0.28) { x = a; y = yg; }
+      box.classList.add('sliding'); box.classList.toggle('wall-l', L.dir < 0);
+    } else if (L.type === 'drop') {            // cai lá do alto da tela e levanta
+      var tf = 0.62; x = a; y = ty; noEase = true;
+      if (t < tf) { var pf = t / tf; arc = Math.max(240, d.maxY - ty + 30) * (1 - pf * pf); setPose('caindo'); flip.style.opacity = Math.min(1, t / 0.1).toFixed(2); }
+      else if (t < tf + 0.5) setPose('levantando');
+      else setPose('agachado');
     } else {                                   // escalar: sobe pela borda e pula por cima
       var cl = 0.85, jm = D - cl - 0.22;
       if (t < cl) { var q2 = t / cl; x = L.x0 + L.dir * 6 * q2; arc = 120 * (1 - Math.pow(1 - q2, 2)); setPose('escalando'); }
@@ -170,8 +197,9 @@
       else { x = a; setPose('agachado'); }
     }
     arc = Math.min(arc, Math.max(0, d.maxY - y));
-    y += (ty - y) * (1 - Math.exp(-dt * 8));
-    if (L.t >= D) { leap = null; arc = 0; flip.style.opacity = 1; flame(false); flip.style.transform = 'scaleX(' + faceTo + ')'; setPose(IDLE[curSec] || 'joinha'); hopNow(); }
+    if (!noEase) y += (ty - y) * (1 - Math.exp(-dt * 8));
+    if (L.type !== 'slide') box.classList.remove('sliding');
+    if (L.t >= D) { box.classList.remove('sliding'); flip.style.transition = ''; flip.style.transformOrigin = ''; leap = null; arc = 0; flip.style.opacity = 1; flame(false); flip.style.transform = 'scaleX(' + faceTo + ')'; setPose(IDLE[curSec] || 'joinha'); hopNow(); }
   }
 
   // ---- modo celular: mini robô sobre a pista de progresso ----
@@ -302,7 +330,7 @@
       else {
         cling = null; flyOn = false; flyBack = false; pend = 0; fastDir = 0;
         pos = clamp(pr.left + pr.width / 2 - d.w / 2 + (perch.dx || 0), 0, d.maxX);
-        offY = clamp(window.innerHeight - g0 - pr.top + (perch.lift || 0), 0, d.maxY);
+        offY = perch.hang ? clamp(window.innerHeight - g0 - pr.bottom - d.h * 0.93 + 6, 0, d.maxY) : clamp(window.innerHeight - g0 - pr.top + (perch.lift || 0), 0, d.maxY);
       }
     }
     var ty = clamp(offY, 0, d.maxY);
@@ -417,7 +445,9 @@
     if (!leap && !flyOn && !clingOn) {
       flame(pose === 'jet-pairando', pose, 1);                       // parado voando: jetpack aceso e pairando
       if (pose === 'jet-pairando') arc = 12 + 5 * Math.sin(now / 260);
-      if (!walking && !drag && now - faceT > 400) { faceT = now; flip.style.transform = 'scaleX(' + faceTo + ')'; }   // parado: virado para o conteúdo
+      if (perch && perch.hang && pose === 'pendurado') { flip.style.transition = 'none'; flip.style.transformOrigin = '50% 6%'; flip.style.transform = 'scaleX(' + faceTo + ') rotate(' + (5 * Math.sin(now / 360)).toFixed(1) + 'deg)'; }
+      else if (flip.style.transformOrigin) { flip.style.transformOrigin = ''; flip.style.transition = ''; }
+      if (!walking && !drag && now - faceT > 400 && !(perch && perch.hang && pose === 'pendurado')) { faceT = now; flip.style.transform = 'scaleX(' + faceTo + ')'; }   // parado: virado para o conteúdo
     }
     box.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + (-(y + arc)).toFixed(1) + 'px,0)';
   }
@@ -464,9 +494,9 @@
       var d = dims(), r = el.getBoundingClientRect(), g0 = parseFloat(getComputedStyle(box).bottom) || 0;
       var tx = clamp(r.left + r.width / 2 - d.w / 2 + (o.dx || 0), 0, d.maxX), ty2 = window.innerHeight - g0 - r.top;
       var dist = Math.abs(tx - x) + Math.abs(ty2 - y), mv = o.move || (dist < 320 ? 'jump' : (reactI++ % 2 ? 'tele' : 'jet')), dur;
-      perch = { el: el, dx: o.dx || 0, lift: o.lift || 0 }; parked = false; pend = 0;
+      perch = { el: el, dx: o.dx || 0, lift: o.lift || 0, hang: !!o.hang }; parked = false; pend = 0;
       if (!RM && !(drag && drag.moved)) { perchKeep = true; startMove(mv, tx); perchKeep = false; pos = tx; }
-      dur = RM ? 0 : (mv === 'tele' ? 1050 : mv === 'jet' ? 1250 : 900);
+      dur = RM ? 0 : (mv === 'tele' ? 1050 : mv === 'jet' ? 1250 : mv === 'drop' ? 1450 : mv === 'flip' ? 1100 : 900);
       pendPose = o.pose ? { pose: o.pose, secs: o.secs || 2.4, face: o.face || 0, at: performance.now() + dur } : null;
       return true;
     },
@@ -479,12 +509,29 @@
     roam: function (o) {                                      // brincar solto: pula / voa / teleporta / escala para outro ponto da tela
       o = o || {};
       if (!shown || hidden || window.INTRO_OPEN || leap || perch || RM || (drag && drag.moved)) return false;
-      var d = dims(), mv = ['jump', 'jet', 'tele', 'climb', 'jet'][Math.floor(Math.random() * 5)], tx, tries = 0;
-      do { tx = mv === 'climb' ? (Math.random() < .5 ? 6 : d.maxX - 6) : d.m + Math.random() * (d.maxX - d.m); } while (Math.abs(tx - x) < 160 && ++tries < 8);
+      var d = dims(), mv = ['jump', 'flip', 'jet', 'tele', 'climb', 'drop', 'tramp', 'jet'][Math.floor(Math.random() * 8)], tx, tries = 0;
+      do { tx = mv === 'tramp' ? x : mv === 'climb' ? (Math.random() < .5 ? 6 : d.maxX - 6) : d.m + Math.random() * (d.maxX - d.m); } while (mv !== 'tramp' && Math.abs(tx - x) < 160 && ++tries < 8);
       parked = false; pend = 0; startMove(mv, tx); pos = tx;
-      var dur = mv === 'tele' ? 1050 : mv === 'jet' ? 1500 : mv === 'climb' ? 1800 : 900;
+      var dur = mv === 'tele' ? 1050 : mv === 'jet' ? 1500 : mv === 'climb' ? 1800 : mv === 'tramp' ? 2300 : mv === 'drop' ? 1450 : mv === 'flip' ? 1100 : 900;
       pendPose = { pose: o.pose || 'joinha', secs: o.secs || 2, face: 0, at: performance.now() + dur };
       return true;
+    },
+    trick: function (name) {                                  // truque no lugar onde está: 'tramp' (trampolim + mortal) ou 'slide' (desliza do bloco até o chão)
+      if (!shown || hidden || window.INTRO_OPEN || leap || RM || (drag && drag.moved)) return false;
+      var d = dims();
+      if (name === 'tramp') { perchKeep = true; startMove('tramp', x); perchKeep = false; return true; }
+      if (name === 'slide') {
+        if (!perch || y < homeY() + 70) return false;
+        var dir = x > d.maxX / 2 ? -1 : 1, tx = null, iv = obstacles(window.innerHeight - d.h - homeY(), window.innerHeight - homeY()), off = d.w * 0.12, bw = d.w * 0.76, k, q, L, ok;
+        for (k = 180; k <= 640 && tx === null; k += 40) for (q = 0; q < 2 && tx === null; q++) {
+          L = x + (q ? -dir : dir) * k; if (L < d.m || L > d.maxX) continue;
+          ok = true; for (var i = 0; i < iv.length; i++) if (L + off < iv[i][1] && L + off + bw > iv[i][0]) { ok = false; break; }
+          if (ok) tx = L;
+        }
+        if (tx === null) return false;
+        parked = false; pend = 0; startMove('slide', tx); pos = tx; return true;
+      }
+      return false;
     },
     perched: function () { return !!perch; },
     el: function () { return perch ? perch.el : null; }

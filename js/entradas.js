@@ -45,24 +45,36 @@
 
   // brincar quando o visitante para de rolar (2 s; no palco, 5 s): sobe nos blocos, pula, voa, teleporta, escala as bordas
   var PLAY = '#dor h2, #dor .trio article, #modelos .eyebrow, #modelos h2, .pl-chip, .pl-screen, .pl-pk, .pl-open, #quem h2, #quem .photo, #quem .about-grid > div > *, #como h2, #como .steps li, #contato h2, #contato .btn';
-  var lastAct = performance.now(), playing = false, ptimer = 0, lastEl = null, POSES = ['danca', 'comemorando', 'estrela', 'joinha', 'pensativo', 'comemorando'];
+  var lastAct = performance.now(), playing = false, ptimer = 0, lastEl = null, POSES = ['danca', 'comemorando', 'estrela', 'joinha', 'pensativo', 'comemorando', 'espiando'];
   function onPalco() { var B = window.Buddy, e = B && B.el && B.el(); return !!(e && e.closest && e.closest('.palco')); }
-  function pickTarget() {
+  function pickTarget(maxFrac) {
     var H = innerHeight, head = Math.min(210, H * .28);
     var els = [].slice.call(document.querySelectorAll(PLAY)).filter(function (e) {
-      var r = e.getBoundingClientRect(); return e !== lastEl && r.width > 40 && r.height > 16 && r.top > head && r.top < H - 90 && r.left > -10 && r.right < innerWidth + 10;
+      var r = e.getBoundingClientRect(); return e !== lastEl && r.width > 40 && r.height > 16 && r.top > head && r.top < H * (maxFrac || 1) - 90 * (maxFrac ? 0 : 1) && r.left > -10 && r.right < innerWidth + 10;
     });
     return els.length ? els[Math.floor(Math.random() * els.length)] : null;
   }
+  var tms = [], lastAct2 = '', ACTS = ['perch', 'tramp', 'slide', 'hang', 'drop', 'flip', 'roam', 'peek', 'tramp', 'slide'];
+  function later(fn, ms) { tms.push(setTimeout(function () { if (playing) fn(); }, ms)); }
   function playStep() {
     var B = window.Buddy;
     if (!playing || !B || !B.ready() || busy) { playing = false; return; }
-    var pose = POSES[Math.floor(Math.random() * POSES.length)], e = Math.random() < .68 ? pickTarget() : null;
-    if (e) { lastEl = e; var w = e.getBoundingClientRect().width; B.goTo(e, { pose: pose, secs: 2.4, dx: (Math.random() - .5) * Math.min(w * .7, 320), lift: -2 }); }
-    else { if (B.perched()) B.release(false); if (!B.roam({ pose: pose, secs: 2.2 })) { var t = pickTarget(); if (t) { lastEl = t; B.goTo(t, { pose: pose, secs: 2.4, lift: -2 }); } } }
-    ptimer = setTimeout(playStep, 3200 + Math.random() * 1600);
+    var act, e = pickTarget(), pose = POSES[Math.floor(Math.random() * POSES.length)], delay = 3400, w;
+    do { act = ACTS[Math.floor(Math.random() * ACTS.length)]; } while (act === lastAct2);
+    if (!e && act !== 'roam') act = 'roam';
+    lastAct2 = act;
+    if (e) { lastEl = e; w = e.getBoundingClientRect().width; }
+    if (act === 'perch') { B.goTo(e, { pose: pose, secs: 2.4, dx: (Math.random() - .5) * Math.min(w * .7, 320), lift: -2 }); delay = 3200 + Math.random() * 1400; }
+    else if (act === 'tramp') { B.goTo(e, { move: 'jump', lift: -2, dx: (Math.random() - .5) * Math.min(w * .6, 240) }); later(function () { B.trick('tramp'); }, 1050); delay = 4300; }
+    else if (act === 'slide') { e = pickTarget(.62) || e; lastEl = e; B.goTo(e, { move: 'jump', lift: -2 }); later(function () { if (!B.trick('slide')) B.roam({ pose: 'joinha' }); }, 1250); delay = 4300; }
+    else if (act === 'hang') { B.goTo(e, { move: 'jet', hang: true, pose: 'pendurado', secs: 3.2, dx: (Math.random() - .5) * Math.min(w * .6, 240) }); delay = 4600; }
+    else if (act === 'drop') { B.goTo(e, { move: 'drop', pose: 'joinha', secs: 1.8, lift: -2 }); delay = 4200; }
+    else if (act === 'flip') { B.goTo(e, { move: 'flip', pose: 'comemorando', secs: 2, lift: -2 }); delay = 3800; }
+    else if (act === 'peek') { var side = Math.random() < .5 ? -1 : 1; B.goTo(e, { move: 'tele', pose: 'espiando', secs: 2.6, dx: side * w * .5, face: -side }); delay = 4000; }
+    else { if (B.perched()) B.release(false); if (!B.roam({ pose: pose, secs: 2.2 }) && e) B.goTo(e, { pose: pose, secs: 2.4, lift: -2 }); delay = 3600; }
+    ptimer = setTimeout(playStep, delay);
   }
-  function stopPlay(rel) { if (!playing) return; playing = false; clearTimeout(ptimer); var B = window.Buddy; if (rel !== false && B && B.perched()) B.release(true); }
+  function stopPlay(rel) { if (!playing) return; playing = false; clearTimeout(ptimer); tms.forEach(clearTimeout); tms = []; var B = window.Buddy; if (rel !== false && B && B.perched()) B.release(true); }
   window.addEventListener('scroll', function () { lastAct = performance.now(); stopPlay(); }, { passive: true });
   ['pointerdown', 'keydown'].forEach(function (n) { window.addEventListener(n, function () { lastAct = performance.now(); stopPlay(false); }, true); });
   if (!RM) setInterval(function () {
