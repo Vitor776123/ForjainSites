@@ -62,7 +62,7 @@
       reactUntil = 0, reactI = 0, drag = null, leap = null, arc = 0,
       fastDir = 0, fastCool = 0, lastSyT = 0, idleW = 0, wanderIn = 5,
       flyDy = 0, flyOn = false, flyBack = false, flyUntil = 0, prevY = 0,
-      mWall = 0, cling = null, clingCool = 0, clingDy = 0, slideT = 0, faceTo = 1, faceT = 0, mHome = 0, mAct = 700, mTurn = 500, mSpd = 0.22, holdUntil = 0, lastAct = '';
+      perch = null, perchKeep = false, pendPose = null, faceOv = null, mWall = 0, cling = null, clingCool = 0, clingDy = 0, slideT = 0, faceTo = 1, faceT = 0, mHome = 0, mAct = 700, mTurn = 500, mSpd = 0.22, holdUntil = 0, lastAct = '';
   var mini = false, mf = 0, mfT = 0, mWalkD = 0, mStill = 0, mSecShown = -1, mLastX = 0, dotsX = [], trackL = 0, trackW = 0;
 
   function setPose(p) {
@@ -137,7 +137,8 @@
   }
   function startMove(type, x1) {
     var dist = Math.abs(x1 - x), dur = type === 'jump' ? clamp(dist / 900, 0.5, 0.9) + 0.36 : type === 'jet' ? clamp(dist / 650, 0.7, 1.5) + 0.7 : type === 'tele' ? 1.0 : 0.85 + clamp(dist / 900, 0.5, 0.8) + 0.22;
-    flyOn = false; flyBack = false; cling = null; box.classList.remove('sliding'); if (!mini && offY > homeY()) offY = homeY();
+    flyOn = false; flyBack = false; cling = null; box.classList.remove('sliding');
+    if (!perchKeep) { perch = null; if (!mini && offY > homeY()) offY = homeY(); }
     leap = { type: type, x0: x, x1: x1, t: 0, dur: dur, dir: x1 >= x ? 1 : -1, dist: dist };
     reactUntil = 0; walking = false;
   }
@@ -227,7 +228,7 @@
     if (visible !== shown) {
       shown = visible; box.classList.toggle('show', shown); track.classList.toggle('on', mini && shown);
       if (shown) {                                   // sempre entra pelo canto esquerdo
-        var d = dims(); pos = d.m; x = d.m; offY = homeY(); y = offY; bounce = 1; pend = 0; parked = false; leap = null; flip.style.opacity = 1; flame(false); dirFace = 1;
+        perch = null; pendPose = null; var d = dims(); pos = d.m; x = d.m; offY = homeY(); y = offY; bounce = 1; pend = 0; parked = false; leap = null; flip.style.opacity = 1; flame(false); dirFace = 1;
         if (!RM) { leap = { type: 'tele', x0: x, x1: x, t: 0.45, dur: 1.0, dir: 1, dist: 0 }; flip.style.opacity = 0; }   // aparece na tela, sem entrar pelo canto
         if (mini) { layoutTrack(); mfT = mf = progress(); }
         setPose(IDLE[curSec] || 'feliz');
@@ -273,9 +274,10 @@
       var cx = x + d.w / 2, best = null, bd = 1e9;
       for (var q = 0; q < iv.length; q++) { var c = (iv[q][0] + iv[q][1]) / 2, dd = Math.abs(c - cx); if (dd < bd) { bd = dd; best = c; } }
       faceTo = best !== null ? (best >= cx ? 1 : -1) : (cx < vw / 2 ? 1 : -1);
+      if (faceOv && now < faceOv.until) faceTo = faceOv.v;
     })();
     function hit(L) { for (var i = 0; i < iv.length; i++) if (L + off < iv[i][1] && L + off + bw > iv[i][0]) return iv[i]; return null; }
-    if (cling) flyDy = 0;
+    if (cling || perch) flyDy = 0;
     if (flyDy) {                                                  // jetpack vertical: sobe quando você rola para cima, desce quando rola para baixo
       if (!RM && !parked && !(drag && drag.moved) && !leap) { flyOn = true; flyBack = false; flyUntil = now + 650; offY = clamp(offY - flyDy * 0.6, homeY(), Math.max(homeY(), d.maxY - 76)); }
       flyDy = 0;
@@ -294,6 +296,15 @@
         } else if (cling.h <= 1 && dyc < 0) { cling = null; clingCool = now + 6000 + Math.random() * 6000; box.classList.remove('sliding'); offY = homeY(); bounce = -bounce; hopNow(); }   // desceu até o chão: solta
       }
     }
+    if (perch) {                                                  // pousado em um elemento da página (botão, título...): acompanha o elemento enquanto a página rola
+      var pr = perch.el.getBoundingClientRect(), g0 = parseFloat(getComputedStyle(box).bottom) || 0;
+      if (!document.contains(perch.el) || pr.bottom < -60 || pr.top > window.innerHeight + 60 || (drag && drag.moved)) { perch = null; offY = homeY(); }
+      else {
+        cling = null; flyOn = false; flyBack = false; pend = 0; fastDir = 0;
+        pos = clamp(pr.left + pr.width / 2 - d.w / 2 + (perch.dx || 0), 0, d.maxX);
+        offY = clamp(window.innerHeight - g0 - pr.top + (perch.lift || 0), 0, d.maxY);
+      }
+    }
     var ty = clamp(offY, 0, d.maxY);
     var dragging = drag && drag.moved, heading = 0, px = x;
     function clearFrom(L, dir) { var I, n = 0; while ((I = hit(L)) && n++ < 10) L = dir > 0 ? I[1] - off : I[0] - off - bw; return (!I && L >= 0 && L <= d.maxX) ? L : null; }
@@ -308,7 +319,7 @@
       var inside = !!hit(pos);
       if (parked && (!inside || parkedScroll > 700)) { parked = false; parkedScroll = 0; }
       // 1) algo apareceu embaixo dele (a página rolou): passa para o outro lado
-      if (inside && !parked && !cling) {
+      if (inside && !parked && !cling && !perch) {
         var go = function (dir) { var L = pos, I, n = 0; while ((I = hit(L)) && n++ < 10) L = dir > 0 ? I[1] - off : I[0] - off - bw; return (!I && L >= 0 && L <= d.maxX) ? L : null; };
         var a = go(dirTravel), b = go(-dirTravel), np = a !== null ? a : b;
         if (a !== null && b !== null && Math.abs(a - pos) > 2.5 * Math.abs(b - pos) && Math.abs(a - pos) > 420) np = b;
@@ -370,7 +381,8 @@
       stepMove(d, ty, dt);
     } else {
       var dx = pos - x, step = dx * (1 - Math.exp(-dt * 6)), cap = 760 * dt;
-      x += clamp(step, -cap, cap); y += (ty - y) * (1 - Math.exp(-dt * 8)); arc = 0;
+      x += clamp(step, -cap, cap); y += (ty - y) * (1 - Math.exp(-dt * (perch ? 16 : 8))); arc = 0;
+      if (perch) x += (pos - x) * (1 - Math.exp(-dt * 14)) - clamp(step, -cap, cap) * 0;
     }
     vx = dt ? (x - px) / dt : 0;
 
@@ -381,6 +393,7 @@
       else { var jp = vy > 40 ? 'jet-subindo' : vy < -40 ? 'jet-pousando' : 'jet-pairando'; setPose(jp); flame(true, jp, jp === 'jet-pousando' ? 0.6 : 1); flip.style.transform = 'scaleX(' + dirFace + ')'; walking = false; }
     }
     prevY = y;
+    if (pendPose && !leap && !drag && now > pendPose.at) { setPose(pendPose.pose); reactUntil = now + pendPose.secs * 1000; if (pendPose.face) faceOv = { v: pendPose.face, until: now + pendPose.secs * 1000 + 600 }; flip.style.transform = 'scaleX(' + (pendPose.face || faceTo) + ')'; hopNow(); pendPose = null; }
     var clingOn = cling && cling.on && !leap && !drag;
     if (clingOn) { dirFace = cling.dir; setPose('escalando'); flip.style.transform = 'scaleX(' + cling.dir + ')'; walking = false; var sl = now - slideT < 220 && cling.h > 2; box.classList.toggle('sliding', sl); box.classList.toggle('wall-l', cling.dir < 0); }
     else if (box.classList.contains('sliding')) box.classList.remove('sliding');
@@ -442,5 +455,28 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', function () { if (mini) layoutTrack(); setMode(); var d = dims(); y = clamp(y, 0, d.maxY); offY = clamp(offY, 0, d.maxY); pos = clamp(pos, -d.w, window.innerWidth); });
   window.addEventListener('intro-end', function () { onScroll(); });
+  // ---- API para a página usar o robô (palco, entradas guiadas) ----
+  window.Buddy = {
+    ready: function () { return shown && !hidden; },
+    goTo: function (el, o) {                                  // pula / voa / teleporta até a borda de cima do elemento e fica pousado nele
+      o = o || {};
+      if (!el || !shown || hidden || window.INTRO_OPEN) return false;
+      var d = dims(), r = el.getBoundingClientRect(), g0 = parseFloat(getComputedStyle(box).bottom) || 0;
+      var tx = clamp(r.left + r.width / 2 - d.w / 2 + (o.dx || 0), 0, d.maxX), ty2 = window.innerHeight - g0 - r.top;
+      var dist = Math.abs(tx - x) + Math.abs(ty2 - y), mv = o.move || (dist < 320 ? 'jump' : (reactI++ % 2 ? 'tele' : 'jet')), dur;
+      perch = { el: el, dx: o.dx || 0, lift: o.lift || 0 }; parked = false; pend = 0;
+      if (!RM && !(drag && drag.moved)) { perchKeep = true; startMove(mv, tx); perchKeep = false; pos = tx; }
+      dur = RM ? 0 : (mv === 'tele' ? 1050 : mv === 'jet' ? 1250 : 900);
+      pendPose = o.pose ? { pose: o.pose, secs: o.secs || 2.4, face: o.face || 0, at: performance.now() + dur } : null;
+      return true;
+    },
+    pose: function (name, secs, face) { var n = performance.now(); setPose(name); reactUntil = n + (secs || 2) * 1000; if (face) faceOv = { v: face, until: n + (secs || 2) * 1000 + 600 }; flip.style.transform = 'scaleX(' + (face || faceTo) + ')'; hopNow(); },
+    release: function (land) {                                // solta do elemento e volta ao lugar de sempre (com jato, se der)
+      perch = null; pendPose = null;
+      if (land && shown && !RM && !leap) { flyOn = true; flyBack = true; flyUntil = 0; }
+      offY = homeY();
+    },
+    perched: function () { return !!perch; }
+  };
   setPose('feliz'); setMode(); onScroll(); requestAnimationFrame(loop);
 })();

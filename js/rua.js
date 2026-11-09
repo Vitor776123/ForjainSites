@@ -533,10 +533,10 @@ function openShop(i) {
   }
   showShop(i);
 }
-function showShop(i) {
+function showShop(i, pacote) {
   const s = SHOPS[i];
   modalTitle.textContent = 'Modelo · ' + s.kicker + ' ' + s.brand;
-  const url = s.slug + '/index.html';
+  const url = s.slug + '/index.html' + (pacote ? '?pacote=' + pacote : '');
   modalOpenLink.href = url;
   strip.querySelector('.s-dor').textContent = s.dor;
   strip.querySelector('.s-sol').textContent = s.sol;
@@ -724,6 +724,8 @@ new IntersectionObserver(es => { heroVisible = es[0].intersectionRatio > .35; if
 if (location.search.indexOf('debug') >= 0) window.__rua = { get cars() { return cars; }, st: () => ({ ry, robotU, stun, crossed, invul, airborne }) };
 /* usado pela busca do topo: leva o robô até a loja (e rola até a rua, se estiver lá embaixo) */
 window.Forja = {
+  shops: SHOPS,
+  open(i, pacote) { opener = document.activeElement; showShop(i, pacote); },
   goShop(i) {
     if (modalOpen) closeModal();
     const r = hero.getBoundingClientRect();
