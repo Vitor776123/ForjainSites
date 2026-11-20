@@ -12,13 +12,14 @@
     [0, 'Padaria', 'padaria pao paes confeitaria bolo bolos doce doces cafe cafeteria salgado salgados lanchonete padeiro'],
     [1, 'Adega', 'adega vinho vinhos bebida bebidas cerveja distribuidora emporio drinks conveniencia tabacaria'],
     [2, 'Academia', 'academia fitness treino musculacao crossfit pilates yoga personal studio estudio danca luta'],
-    [3, 'Barbearia', 'barbearia barbeiro barba cabelo salao cabeleireiro beleza estetica manicure unha unhas sobrancelha'],
+    [3, 'Barbearia', 'barbearia barbeiro barba cabelo masculino corte degrade'],
     [4, 'Pet Shop', 'pet petshop cachorro gato veterinario veterinaria racao animal animais banho tosa'],
     [5, 'Pizzaria', 'pizza pizzaria restaurante hamburguer hamburgueria lanche delivery comida bar marmita sushi churrasco japones'],
     [6, 'Farmácia', 'farmacia drogaria remedio remedios saude manipulacao clinica dentista odontologia otica consultorio'],
     [7, 'Oficina', 'oficina mecanica mecanico carro carros auto automotivo funilaria borracharia moto motos lavajato pecas pneu'],
     [8, 'Moda', 'roupa roupas moda boutique brecho calcado calcados sapato sapatos acessorios semijoia bolsa loja vestuario'],
-    [9, 'Floricultura', 'flor flores floricultura buque buques jardim jardinagem planta plantas presente presentes cesta cestas']
+    [9, 'Floricultura', 'flor flores floricultura buque buques jardim jardinagem planta plantas presente presentes cesta cestas'],
+    [10, 'Salão de Beleza', 'salao beleza cabeleireiro cabeleireira cabelo escova progressiva manicure pedicure unha unhas sobrancelha estetica esmalteria maquiagem studio']
   ];
   var norm = function (t) { return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); };
   var KW = BIZ.map(function (b) { return norm(b[2]).split(' '); });

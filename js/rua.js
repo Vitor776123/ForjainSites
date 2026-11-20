@@ -12,14 +12,15 @@ const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SHOPS = [
   { slug:'padaria', dor:"O cliente não sabe se ainda tem pão, nem a hora que sai do forno.", sol:"Cardápio do dia sempre atualizado e pedido direto pelo WhatsApp.",     kicker:'Padaria',      brand:'Pão Quente',    desc:'Cardápio do dia, encomendas de bolos e pedido pelo WhatsApp.',         color:'#8a4b12', font:'serif' },
   { slug:'adega', dor:"O cliente não acha rótulo nem preço e acaba comprando no concorrente.", sol:"Vitrine de vinhos com filtros, harmonização e clube de assinatura.",       kicker:'Adega',        brand:'Vinho & Prosa', desc:'Vitrine de rótulos, harmonizações e clube de assinatura.',            color:'#f0d9a0', font:'serifi' },
-  { slug:'academia', dor:"Quem pergunta plano e horário no direct fica sem resposta.", sol:"Planos, grade de aulas e matrícula online, sem fila.",    kicker:'Academia',     brand:'Pulso',         desc:'Planos, horários das aulas e matrícula online.',                      color:'#c6ff3a', font:'sans' },
+  { slug:'academia', url:'https://leonidas-iron-forge.lovable.app', dor:"Treino passado no papel ou no WhatsApp: o aluno se perde e o professor não acompanha.", sol:"Treino montado para cada aluno, no celular, com histórico e evolução.",    kicker:'Academia',     brand:'Leonidas',      desc:'Treinos por aluno, professores, histórico e evolução.',                      color:'#c6ff3a', font:'sans' },
   { slug:'barbearia', dor:"Agenda no caderno e no WhatsApp: horário perdido e cliente esperando.", sol:"Agendamento online com os horários livres à vista.",   kicker:'Barbearia',    brand:'Navalha',       desc:'Serviços, equipe e agendamento de horário.',                          color:'#e9c27c', font:'serif' },
   { slug:'petshop', dor:"Banho e tosa marcados por mensagem viram confusão de horário.", sol:"Agendamento fácil e lembretes de vacina e retorno.",     kicker:'Pet Shop',     brand:'Patinhas',      desc:'Banho e tosa, produtos e agendamento para o seu pet.',                color:'#2e6b3a', font:'sans' },
-  { slug:'pizzaria', dor:"O pedido passa por aplicativos que levam uma fatia do lucro.", sol:"Cardápio próprio e pedido de entrega direto com você.",    kicker:'Pizzaria',     brand:'Forno a Lenha', desc:'Cardápio, promoções e pedido de entrega.',                            color:'#b3261e', font:'serif' },
+  { slug:'pizzaria', url:'https://modelo-de-pizzaria.vercel.app', dor:"O pedido passa por aplicativos que levam uma fatia do lucro.", sol:"Cardápio próprio e pedido de entrega direto com você.",    kicker:'Pizzaria',     brand:'Forno a Lenha', desc:'Cardápio, promoções e pedido de entrega.',                            color:'#b3261e', font:'serif' },
   { slug:'farmacia', dor:"O cliente liga só para saber se tem o produto e que horas fecha.", sol:"Serviços, horários e contato rápido num só lugar.",    kicker:'Farmácia',     brand:'Vida',          desc:'Serviços, campanhas de saúde e contato rápido.',                      color:'#1a8f4a', font:'sans' },
   { slug:'oficina', dor:"Orçamento por telefone demora e o cliente não sabe como está o carro.", sol:"Pedido de orçamento online e acompanhamento do conserto.",     kicker:'Oficina',      brand:'Torque',        desc:'Serviços, orçamento rápido e histórico do cliente.',                  color:'#ffd23f', font:'sans' },
   { slug:'roupas', dor:"Só o Instagram: peças se perdem e é difícil achar tamanho e preço.", sol:"Vitrine organizada por coleção e atendimento por mensagem.",      kicker:'Moda',         brand:'Ateliê 7',      desc:'Coleções, vitrine e atendimento por mensagem.',                       color:'#6b3fa0', font:'serifi' },
-  { slug:'floricultura', dor:"Em datas como o Dia das Mães o WhatsApp lota e pedidos se perdem.", sol:"Catálogo de arranjos e pedido organizado, com entrega combinada.",kicker:'Floricultura', brand:'Pétala',        desc:'Arranjos, datas especiais e entrega no mesmo dia.',                   color:'#c2417a', font:'serifi' }
+  { slug:'floricultura', dor:"Em datas como o Dia das Mães o WhatsApp lota e pedidos se perdem.", sol:"Catálogo de arranjos e pedido organizado, com entrega combinada.",kicker:'Floricultura', brand:'Pétala',        desc:'Arranjos, datas especiais e entrega no mesmo dia.',                   color:'#c2417a', font:'serifi' },
+  { slug:'salao', url:'https://espa-obeauty-trf1.vercel.app', dor:"Horário marcado por mensagem: cliente esperando resposta e agenda bagunçada.", sol:"A cliente escolhe o serviço e o horário livre sozinha, a qualquer hora.", kicker:'Salão de Beleza', brand:'Espaço Beauty', desc:'Serviços, preços e agendamento online com a profissional.', color:'#6b2348', font:'serifi' }
 ];
 const READY = new Set(['padaria','adega','academia']); // modelos já com página mais completa (por enquanto todos são provisórios)
 
@@ -547,7 +548,8 @@ function openShop(i) {
 function showShop(i, pacote) {
   const s = SHOPS[i];
   modalTitle.textContent = 'Modelo · ' + s.kicker + ' ' + s.brand;
-  const url = s.slug + '/index.html' + (pacote ? '?pacote=' + pacote : '');
+  // modelos de verdade (site no ar) abrem pelo endereço próprio; os demais, pela página de demonstração
+  const url = s.url || (s.slug + '/index.html' + (pacote ? '?pacote=' + pacote : ''));
   modalOpenLink.href = url;
   strip.querySelector('.s-dor').textContent = s.dor;
   strip.querySelector('.s-sol').textContent = s.sol;
