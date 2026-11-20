@@ -541,21 +541,34 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
   .hint,.buddy-toggle{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(10,11,13,.82)}
 }
 
-/* celular: seção "Além do site" (agendamento) compacta */
+/* "Além do site": ícone em cada bloco; no celular os blocos viram títulos que abrem o texto */
+.ag-ic{width:26px;height:26px;fill:none;stroke:var(--ciano);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block;margin-bottom:10px}
+.ag-det{display:none}
+.ag-cta{margin-top:28px}
 @media (max-width:720px){
-  #agenda .lead{font-size:.9rem;margin-top:.5rem}
-  #agenda .trio{grid-template-columns:1fr 1fr;gap:7px}
-  #agenda .trio article{display:block;padding:10px 11px}
-  #agenda .trio h3{font-size:.92rem;line-height:1.15}
-  #agenda .trio p{font-size:.76rem;line-height:1.35;margin-top:4px}
-  #agenda .steps{grid-template-columns:1fr 1fr;gap:7px}
-  #agenda .steps li{grid-template-columns:24px 1fr;column-gap:8px;padding:9px 10px}
+  #agenda .lead{display:none}
+  #agenda .ag-grid{grid-template-columns:1fr 1fr;gap:7px;margin-top:14px}
+  #agenda .ag-grid article{position:relative;display:flex;align-items:center;gap:9px;min-height:52px;padding:8px 26px 8px 10px;border-radius:13px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s,background .2s}
+  #agenda .ag-grid article::after{content:"+";position:absolute;right:10px;top:50%;transform:translateY(-50%);font:700 1.1rem/1 var(--sans);color:var(--aco)}
+  #agenda .ag-grid article.on{border-color:var(--ciano);background:#13262b}
+  #agenda .ag-grid article.on::after{content:"\2212";color:var(--ciano)}
+  #agenda .ag-ic{flex:none;width:22px;height:22px;margin:0}
+  #agenda .ag-grid h3{margin:0;font-size:.86rem;line-height:1.15}
+  #agenda .ag-grid p{display:none}
+  .ag-det{display:block;margin:8px 0 0;min-height:3.9em;padding:10px 12px;border-left:3px solid var(--ciano);border-radius:0 12px 12px 0;background:rgba(61,232,240,.07);font-size:.84rem;line-height:1.4;color:var(--gelo)}
+  .ag-det.troca{animation:agIn .25s ease-out}
+  #agenda .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:12px;counter-reset:none}
+  #agenda .steps li{display:flex;flex-direction:column;align-items:center;gap:5px;padding:0;background:none;border:0;text-align:center;position:relative}
+  #agenda .steps li:not(:last-child)::after{content:"";position:absolute;top:12px;left:calc(50% + 16px);right:calc(-50% + 16px);height:2px;background:rgba(61,232,240,.35)}
   #agenda .steps .num{width:24px;height:24px;font-size:.74rem}
-  #agenda .steps h3{font-size:.86rem}
-  #agenda .steps p{font-size:.74rem}
+  #agenda .steps h3{margin:0;font-size:.68rem;line-height:1.2;font-family:var(--sans);font-weight:600;color:var(--prata)}
+  #agenda .steps p{display:none}
+  .ag-cta{margin-top:14px}
   #agenda .btn{width:100%;justify-content:center}
-  #agenda p[style]{margin-top:12px!important}
 }
+@keyframes agIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.ag-det.troca{animation:none}}
+
 
 /* cartão do carrossel: tocar abre a prévia */
 .pl-tap{margin:4px 0 0!important;font:700 .86rem var(--sans);color:var(--ciano)!important}
@@ -568,3 +581,6 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
 /* nova ordem (Início, Além do site, A solução, Quem sou, Contato): fundos alternados */
 #quem{background:var(--grafite)}
 #contato{background:var(--forja)}
+
+/* nada pode empurrar a página para o lado (blocos entrando com deslize lateral) */
+html,body{overflow-x:clip}
