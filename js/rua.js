@@ -12,7 +12,7 @@ const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SHOPS = [
   { slug:'padaria', dor:"O cliente não sabe se ainda tem pão, nem a hora que sai do forno.", sol:"Cardápio do dia sempre atualizado e pedido direto pelo WhatsApp.",     kicker:'Padaria',      brand:'Pão Quente',    desc:'Cardápio do dia, encomendas de bolos e pedido pelo WhatsApp.',         color:'#8a4b12', font:'serif' },
   { slug:'adega', dor:"O cliente não acha rótulo nem preço e acaba comprando no concorrente.", sol:"Vitrine de vinhos com filtros, harmonização e clube de assinatura.",       kicker:'Adega',        brand:'Vinho & Prosa', desc:'Vitrine de rótulos, harmonizações e clube de assinatura.',            color:'#f0d9a0', font:'serifi' },
-  { slug:'academia', url:'https://leonidas-iron-forge.lovable.app', dor:"Treino passado no papel ou no WhatsApp: o aluno se perde e o professor não acompanha.", sol:"Treino montado para cada aluno, no celular, com histórico e evolução.",    kicker:'Academia',     brand:'Leonidas',      desc:'Treinos por aluno, professores, histórico e evolução.',                      color:'#c6ff3a', font:'sans' },
+  { slug:'academia', url:'https://leonidas-iron-forge.lovable.app', dor:"Treino passado no papel ou no WhatsApp: o aluno se perde e o professor não acompanha.", sol:"Treino montado para cada aluno, no celular, com histórico e evolução.",    kicker:'Academia',     brand:'',      desc:'Treinos por aluno, professores, histórico e evolução.',                      color:'#c6ff3a', font:'sans' },
   { slug:'barbearia', dor:"Agenda no caderno e no WhatsApp: horário perdido e cliente esperando.", sol:"Agendamento online com os horários livres à vista.",   kicker:'Barbearia',    brand:'Navalha',       desc:'Serviços, equipe e agendamento de horário.',                          color:'#e9c27c', font:'serif' },
   { slug:'petshop', dor:"Banho e tosa marcados por mensagem viram confusão de horário.", sol:"Agendamento fácil e lembretes de vacina e retorno.",     kicker:'Pet Shop',     brand:'Patinhas',      desc:'Banho e tosa, produtos e agendamento para o seu pet.',                color:'#2e6b3a', font:'sans' },
   { slug:'pizzaria', url:'https://modelo-de-pizzaria.vercel.app', dor:"O pedido passa por aplicativos que levam uma fatia do lucro.", sol:"Cardápio próprio e pedido de entrega direto com você.",    kicker:'Pizzaria',     brand:'Forno a Lenha', desc:'Cardápio, promoções e pedido de entrega.',                            color:'#b3261e', font:'serif' },
@@ -178,7 +178,8 @@ function build() {
       const sg = div('sign', b, { left:(g.x * 100 + g.w * 7) + '%', top:(g.y * 100 + g.h * 8) + '%', width:(g.w * 86) + '%', height:(g.h * 84) + '%', color:s.color });
       sg.dataset.font = s.font;
       const k = document.createElement('span'); k.className = 'k'; k.textContent = s.kicker;
-      const br = document.createElement('span'); br.className = 'b'; br.textContent = s.brand;
+      const br = document.createElement('span'); br.className = 'b'; br.textContent = s.brand || s.kicker;
+      if (!s.brand) k.textContent = 'Modelo de site';   // sem nome de loja: a placa mostra só o tipo de negócio
       sg.appendChild(k); sg.appendChild(br);
     }
     main.appendChild(b); shopEls[o.i] = b;
@@ -362,7 +363,7 @@ function updateAct() {
   actEl.textContent = on ? 'Ver o site' : (open ? 'Ligar o site' : 'Entrar na loja');
   actEl.classList.toggle('is-on', on);
   scBtn.textContent = actEl.textContent;
-  cardEl.querySelector('.sc-k').textContent = s.kicker + ' · ' + s.brand;
+  cardEl.querySelector('.sc-k').textContent = s.kicker + (s.brand ? ' · ' + s.brand : '');
   cardEl.querySelector('.sc-t').textContent = on ? s.sol : (open ? s.dor : 'Esta loja ainda não tem site.');
   cardEl.classList.toggle('on', true);
   cardEl.classList.toggle('is-on', on);
@@ -547,7 +548,7 @@ function openShop(i) {
 }
 function showShop(i, pacote) {
   const s = SHOPS[i];
-  modalTitle.textContent = 'Modelo · ' + s.kicker + ' ' + s.brand;
+  modalTitle.textContent = 'Modelo · ' + s.kicker + (s.brand ? ' ' + s.brand : '');
   // modelos de verdade (site no ar) abrem pelo endereço próprio; os demais, pela página de demonstração
   const url = s.url || (s.slug + '/index.html' + (pacote ? '?pacote=' + pacote : ''));
   modalOpenLink.href = url;
@@ -686,7 +687,7 @@ function buildGrid() {
     const ready = READY.has(s.slug);
     c.innerHTML =
       '<div class="card-img"><img src="' + IMG('loja-' + s.slug) + '" alt="Fachada ilustrada da ' + s.kicker.toLowerCase() + ' ' + s.brand + '" loading="lazy"></div>' +
-      '<div class="card-body"><span class="k">' + s.kicker + '</span><h3>' + s.brand + '</h3><p class="cd"><b>A dor</b>' + s.dor + '</p><p class="cs"><b>A solução</b>' + s.sol + '</p>' +
+      '<div class="card-body"><span class="k">' + s.kicker + '</span><h3>' + (s.brand || s.kicker) + '</h3><p class="cd"><b>A dor</b>' + s.dor + '</p><p class="cs"><b>A solução</b>' + s.sol + '</p>' +
       '<button class="btn btn-ghost" type="button" data-i="' + i + '">Ver prévia</button></div>';
     grid.appendChild(c);
   });
