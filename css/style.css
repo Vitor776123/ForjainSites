@@ -487,3 +487,47 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
 .rv-on .rv.rv-in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.rv-on .rv{opacity:1;transform:none;transition:none}}
 #grid{display:none}
+
+/* ---- celular: cada seção cabe numa tela e a rolagem "encaixa" no começo dela ----
+   topo livre para a barra do menu (~84px) e base livre para a pista de progresso (~56px) */
+@media (max-width:720px){
+  html{scroll-snap-type:y proximity}
+  section[id]{scroll-margin-top:0;scroll-snap-align:start}
+  .band,.about,.models,.contact{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding:80px 0 60px;box-sizing:border-box}
+  .band h2,.about h2,.contact h2,.models h2{font-size:1.45rem;line-height:1.12}
+  .eyebrow{margin-bottom:.45rem;font-size:.7rem}
+
+  /* A dor / Como funciona: cartões compactos, número ao lado do título */
+  .trio,.steps{gap:7px;margin-top:12px}
+  .trio article,.steps li{display:grid;grid-template-columns:28px 1fr;column-gap:10px;align-items:center;padding:10px 12px;border-radius:14px}
+  .trio .num,.steps .num{width:28px;height:28px;font-size:.82rem}
+  .trio h3,.steps h3{margin:0;font-size:1.02rem}
+  .trio p,.steps p{grid-column:2;margin-top:2px;font-size:.82rem;line-height:1.36}
+
+  /* Quem sou: foto pequena ao lado do título */
+  .about-grid{grid-template-columns:84px 1fr;gap:6px 14px;align-items:start}
+  .about-grid>div:last-child{display:contents}
+  .photo{grid-column:1;grid-row:1/span 2;width:84px;max-width:none;border-radius:16px;font-size:.6rem;text-align:center;padding:4px}
+  .about .eyebrow{grid-column:2;grid-row:1;align-self:end}
+  .about h2{grid-column:2;grid-row:2}
+  .about p{grid-column:1/-1;font-size:.92rem;margin:.5rem 0 0}
+  .about .about-text{font-size:.98rem}
+
+  /* A solução: cartão, setas, pacotes e botão numa tela só */
+  .models .lead,.models .note{display:none}
+  .palco{margin-top:12px}
+  .pl-img{min-height:0;height:100px;padding:8px 10px 0}.pl-img img{max-height:92px}
+  .pl-txt{padding:10px 14px 12px;gap:4px}
+  .pl-txt .k{font-size:.64rem}
+  .pl-txt h3{font-size:1.2rem}
+  .pl-txt .dor{font-size:.82rem;line-height:1.36}.pl-txt .sol{font-size:.86rem;line-height:1.32}
+  .pl-badge{display:none}
+  .pl-nav{padding:6px 0 0}
+  .pl-arrow{width:42px;height:42px}.pl-arrow svg{width:22px;height:22px}
+  .pl-where{gap:3px}.pl-name{font-size:.98rem}.pl-count{font-size:.7rem}
+  .pl-pks{padding:8px 0 0;gap:6px}
+  .pl-pk{padding:8px 6px;border-radius:12px}.pl-pk b{font-size:.86rem}
+  .pl-go{padding-top:8px}
+  .pl-open{padding:.7em 1em;font-size:.92rem}
+  .contact .lead{margin:.7rem auto 1.2rem}
+}

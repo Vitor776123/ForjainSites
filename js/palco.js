@@ -62,8 +62,9 @@
       if (best !== cur) { cur = best; render(); }
     });
   }, { passive: true });
+  var SMALL = matchMedia('(max-width: 720px)');                                   // celular: o robô não pousa nos botões (cobriria o cartão)
   function robot(el, pose) {
-    if (!window.Buddy || !Buddy.ready()) return false;
+    if (!window.Buddy || !Buddy.ready() || SMALL.matches) return false;
     var r = el.getBoundingClientRect(), H = innerHeight, head = Math.min(190, H * .26), dy = 0;       // traz o botão (com folga para o robô em cima) para a tela
     if (r.top < head + 70) dy = r.top - (head + 70); else if (r.bottom > H - 70) dy = r.bottom - (H - 70);
     if (dy) { scrollBy({ top: dy, behavior: RM ? 'auto' : 'smooth' }); setTimeout(function () { Buddy.goTo(el, { pose: pose, secs: 2.6, lift: -4 }); }, RM ? 0 : 520); }
