@@ -636,3 +636,45 @@ html.bf-aberto .buddy,html.bf-aberto .buddy-toggle,html.bf-aberto .ptrack{visibi
   .bf-b{font-size:.93rem}
 }
 @media (prefers-reduced-motion:reduce){.bf-b,.bf-janela,.bf-fundo{animation:none;transition:none}.bf-dig i{animation:none}}
+
+/* ---------- mini game "Forjabô na Avenida" (jogo.js) ---------- */
+.jg-largada{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 auto 26px;padding:10px 26px 12px;border:0;background:none;color:var(--gelo);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.jg-largada img{position:relative;z-index:1;height:clamp(96px,16vh,130px);width:auto;filter:drop-shadow(0 8px 10px rgba(0,0,0,.45));animation:jgEspera 1.6s ease-in-out infinite}
+.jg-pista{position:absolute;left:50%;bottom:34px;width:170px;height:46px;transform:translateX(-50%) perspective(160px) rotateX(55deg);background:#33373e;border-radius:6px;display:flex;justify-content:space-evenly;overflow:hidden}
+.jg-pista i{width:3px;height:100%;background:repeating-linear-gradient(to bottom,#f2d65a 0 8px,transparent 8px 16px);animation:jgFaixa .6s linear infinite}
+.jg-chama{position:relative;z-index:1;font:700 .9rem var(--sans);color:var(--ciano);padding:.45em .9em;border:1px solid rgba(61,232,240,.5);border-radius:999px;background:rgba(61,232,240,.08);animation:jgPulso 1.8s ease-in-out infinite}
+.jg-largada:hover img{transform:translateY(-3px)}
+@keyframes jgEspera{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes jgFaixa{to{background-position:0 16px}}
+@keyframes jgPulso{0%,100%{box-shadow:0 0 0 0 rgba(61,232,240,.35)}60%{box-shadow:0 0 0 10px rgba(61,232,240,0)}}
+html.jg-perto .buddy{visibility:hidden}                       /* no Contato o Forjabô fica na largada */
+html.jg-aberto{overflow:hidden}
+html.jg-aberto .buddy,html.jg-aberto .buddy-toggle,html.jg-aberto .ptrack,html.jg-aberto .topbar{visibility:hidden}
+.jg{position:fixed;inset:0;z-index:420;background:#2b2f36;touch-action:none;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+.jg[hidden]{display:none}
+.jg-cv{display:block;width:100%;height:100%}
+.jg-hud{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 12px 0;pointer-events:none}
+.jg-pts{display:flex;align-items:baseline;gap:6px;padding:.4em .9em;border-radius:999px;background:rgba(10,11,13,.6);color:var(--gelo);font:600 .8rem var(--sans)}
+.jg-pts b{font:800 1.35rem/1 var(--sans);color:var(--ciano)}
+.jg-pts.pop b{animation:jgPop .25s ease-out}
+.jg-dist{flex:1;color:rgba(244,246,248,.85);font:700 .85rem var(--sans);text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.jg-x{pointer-events:auto;width:42px;height:42px;border-radius:50%;border:1px solid rgba(244,246,248,.35);background:rgba(10,11,13,.55);color:var(--gelo);font-size:1rem;cursor:pointer}
+.jg-pw{position:absolute;left:12px;top:calc(62px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.pw{display:flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:999px;background:rgba(10,11,13,.6)}
+.pw[hidden]{display:none}
+.pw img{width:30px;height:30px;object-fit:contain}
+.pw i{display:block;width:min(110px,26vw);height:7px;border-radius:7px;background:rgba(244,246,248,.18);overflow:hidden}
+.pw b{display:block;height:100%;background:linear-gradient(90deg,#ff6a1a,#ffb03b);transform-origin:left}
+.pw[data-k="ima"] b{background:linear-gradient(90deg,#d6302a,#ff7a6a)}
+.jg-g img{width:24px;height:24px;object-fit:contain}
+.jg-tela{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;background:rgba(10,11,13,.62);color:var(--gelo)}
+.jg-tela[hidden]{display:none}
+.jg-tela h2{margin:0;font:700 clamp(1.6rem,6vw,2.4rem)/1.1 var(--serif)}
+.jg-k{margin:0;font:700 .78rem var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ciano)}
+.jg-ajuda{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:6px;text-align:left;font-size:.9rem;color:var(--prata)}
+.jg-g{display:inline-grid;place-items:center;width:28px;height:28px;margin-right:9px;border-radius:8px;background:rgba(61,232,240,.14);color:var(--ciano);font-weight:800}
+.jg-rec,.jg-sub{margin:0;color:var(--prata);font-size:.92rem;max-width:34ch}
+.jg-btn{min-width:min(280px,80vw);border:0;border-radius:999px;background:var(--ciano);color:var(--on-ciano);font:800 1.05rem var(--sans);padding:.95em 1.6em;cursor:pointer}
+.jg-btn-2{background:none;color:var(--ciano);border:1px solid rgba(61,232,240,.6)}
+@keyframes jgPop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.jg-largada img,.jg-pista i,.jg-chama{animation:none}}
