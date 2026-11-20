@@ -456,7 +456,7 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
 .pl-track{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;outline:none}
 .pl-track::-webkit-scrollbar{display:none}
 .pl-track:focus-visible .pl-slide.on{outline:2px solid var(--ciano);outline-offset:-2px}
-.pl-slide{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;cursor:pointer;transition:opacity .3s,transform .3s}
+.pl-slide{flex:0 0 100%;scroll-snap-align:center;cursor:pointer;transition:opacity .3s,transform .3s}
 .pl-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 4px}
 .pl-arrow{flex:none;display:grid;place-items:center;width:56px;height:56px;border-radius:50%;border:1px solid var(--ciano);background:#16262b;color:var(--ciano);cursor:pointer;transition:background .2s,transform .15s}
 .pl-arrow:hover{background:#1d353b}.pl-arrow:active{transform:scale(.92)}
@@ -518,7 +518,7 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
   /* A solução: cartão, setas, pacotes e botão numa tela só */
   .models .lead,.models .note{display:none}
   .palco{margin-top:12px}
-  .pl-img{min-height:0;height:100px;padding:8px 10px 0}.pl-img img{max-height:92px}
+  .pl-img{min-height:0;height:140px;padding:10px 10px 0}.pl-img img{max-height:130px}
   .pl-txt{padding:10px 14px 12px;gap:4px}
   .pl-txt .k{font-size:.64rem}
   .pl-txt h3{font-size:1.2rem}
@@ -556,3 +556,8 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
   #agenda .btn{width:100%;justify-content:center}
   #agenda p[style]{margin-top:12px!important}
 }
+
+/* cartão do carrossel: tocar abre a prévia */
+.pl-tap{margin:4px 0 0!important;font:700 .86rem var(--sans);color:var(--ciano)!important}
+.pl-slide.on:hover{border-color:rgba(61,232,240,.5)}
+@media (max-width:720px){.pl-tap{font-size:.8rem}}
