@@ -72,7 +72,7 @@
     else if (act === 'flip') { B.goTo(e, { move: 'flip', pose: 'comemorando', secs: 2, lift: -2 }); delay = 3800; }
     else if (act === 'peek') { var side = Math.random() < .5 ? -1 : 1; B.goTo(e, { move: 'tele', pose: 'espiando', secs: 2.6, dx: side * w * .5, face: -side }); delay = 4000; }
     else { if (B.perched()) B.release(false); if (!B.roam({ pose: pose, secs: 2.2 }) && e) B.goTo(e, { pose: pose, secs: 2.4, lift: -2 }); delay = 3600; }
-    ptimer = setTimeout(playStep, delay);
+    ptimer = setTimeout(playStep, delay + 1000);   // +1 s de pausa entre uma animação e outra (ritmo de ~3 s)
   }
   function stopPlay(rel) { if (!playing) return; playing = false; clearTimeout(ptimer); tms.forEach(clearTimeout); tms = []; var B = window.Buddy; if (rel !== false && B && B.perched()) B.release(true); }
   window.addEventListener('scroll', function () { lastAct = performance.now(); stopPlay(); }, { passive: true });
@@ -80,7 +80,7 @@
   if (!RM) setInterval(function () {
     var B = window.Buddy, now = performance.now();
     if (playing || busy || !B || !B.ready()) return;
-    if (now - lastAct < (B.perched() && onPalco() ? 5000 : 2000)) return;
+    if (now - lastAct < (B.perched() && onPalco() ? 5000 : 3000)) return;
     if (B.perched() && !onPalco()) return;
     var m = document.getElementById('modal'); if (m && !m.hidden) return;
     playing = true; playStep();
