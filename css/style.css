@@ -561,3 +561,6 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
 .pl-tap{margin:4px 0 0!important;font:700 .86rem var(--sans);color:var(--ciano)!important}
 .pl-slide.on:hover{border-color:rgba(61,232,240,.5)}
 @media (max-width:720px){.pl-tap{font-size:.8rem}}
+
+/* prévia limpa: sem a faixa de dor/solução, só a legenda do modelo */
+.win-strip{display:none!important}
