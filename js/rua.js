@@ -384,7 +384,7 @@ function crossStreet() {
   hintEl.classList.add('off');
   liveEl.textContent = 'O ' + NAME + ' atravessou a rua e seguiu para a próxima parte da página.';
   setTimeout(() => {
-    const t = document.getElementById('dor');
+    const t = document.getElementById('agenda');
     if (t && crossed) t.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'start' });
   }, 350);
 }

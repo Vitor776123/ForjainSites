@@ -4,19 +4,19 @@
   'use strict';
   var RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var hero = document.getElementById('hero');
-  var ids = ['dor', 'modelos', 'quem', 'como', 'contato'];
+  var ids = ['agenda', 'modelos', 'quem', 'contato'];
   var secs = ids.map(function (i) { return document.getElementById(i); });
   if (!hero || secs.some(function (s) { return !s; })) return;
 
   var IMG = function (n) { return 'assets/img/robo-' + n + '.webp'; };
   var PM = window.POSES || {};
   // pose de descanso por seção (só poses que fazem sentido sozinhas, sem "apresentar o nada")
-  var IDLE = { dor: 'joinha', modelos: 'joinha', quem: 'joinha', como: 'joinha', contato: 'joinha' };   // pose de espera: sempre o joinha
+  var IDLE = { agenda: 'joinha', modelos: 'joinha', quem: 'joinha', contato: 'joinha' };   // pose de espera: sempre o joinha
   var REACT = ['joinha', 'comemorando', 'danca', 'estrela'];
   var WALK = ['andando-1', 'andando-2', 'andando-3', 'andando-4'];
   var ALL = ['triste', 'apontando', 'feliz', 'comemorando', 'joinha', 'danca', 'estrela', 'pensativo', 'agachado', 'escalando', 'teleporte', 'aparecendo', 'jet-subindo', 'jet-voando', 'jet-pousando', 'jet-pairando', 'mortal', 'rampa', 'derrapando', 'pendurado', 'espiando', 'tonto', 'caindo', 'levantando'].concat(WALK);
   var NOZ = { 'jet-pairando': [[[.16,.61]], [-.12,1]], 'jet-subindo': [[[.16,.6],[.29,.6]], [0,1]], 'jet-voando': [[[.1,.43],[.16,.5]], [-.78,.62]], 'jet-pousando': [[[.15,.4],[.25,.4]], [-.1,1]] };
-  var LABELS = ['A dor', 'Modelos', 'Quem sou', 'Como', 'Contato'];
+  var LABELS = ['Além do site', 'Modelos', 'Quem sou', 'Contato'];
   var mq = window.matchMedia ? matchMedia('(hover:none),(max-width:720px)') : { matches: false };
 
   var box = document.createElement('div');

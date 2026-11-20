@@ -564,3 +564,7 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
 
 /* prévia limpa: sem a faixa de dor/solução, só a legenda do modelo */
 .win-strip{display:none!important}
+
+/* nova ordem (Início, Além do site, A solução, Quem sou, Contato): fundos alternados */
+#quem{background:var(--grafite)}
+#contato{background:var(--forja)}
