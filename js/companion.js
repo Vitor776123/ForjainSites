@@ -62,7 +62,7 @@
       reactUntil = 0, reactI = 0, drag = null, leap = null, arc = 0,
       fastDir = 0, fastCool = 0, lastSyT = 0, idleW = 0, wanderIn = 5,
       flyDy = 0, flyOn = false, flyBack = false, flyUntil = 0, prevY = 0,
-      perch = null, perchKeep = false, pendPose = null, faceOv = null, mWall = 0, cling = null, clingCool = 0, clingDy = 0, slideT = 0, faceTo = 1, faceT = 0, mHome = 0, mAct = 700, mTurn = 500, mSpd = 0.22, holdUntil = 0, lastAct = '';
+      perch = null, perchKeep = false, settle = null, pendPose = null, faceOv = null, mWall = 0, cling = null, clingCool = 0, clingDy = 0, slideT = 0, faceTo = 1, faceT = 0, mHome = 0, mAct = 700, mTurn = 500, mSpd = 0.22, holdUntil = 0, lastAct = '';
   var mini = false, mf = 0, mfT = 0, mWalkD = 0, mStill = 0, mSecShown = -1, mLastX = 0, dotsX = [], trackL = 0, trackW = 0;
 
   function setPose(p) {
@@ -449,27 +449,55 @@
       else if (flip.style.transformOrigin) { flip.style.transformOrigin = ''; flip.style.transition = ''; }
       if (!walking && !drag && now - faceT > 400 && !(perch && perch.hang && pose === 'pendurado')) { faceT = now; flip.style.transform = 'scaleX(' + faceTo + ')'; }   // parado: virado para o conteúdo
     }
+    // segurando/arrastando: ele liga o jetpack e voa junto com o dedo
+    if (drag && (drag.moved || now - drag.t0 > 180)) {
+      drag.jet = true; settle = null; walking = false; reactUntil = 0;
+      var gvx = drag.vx || 0, gvy = drag.vy || 0, jp2 = Math.abs(gvx) > 260 ? 'jet-voando' : gvy < -160 ? 'jet-subindo' : gvy > 160 ? 'jet-pousando' : 'jet-pairando';
+      setPose(jp2); flame(true, jp2, 1);
+      if (Math.abs(gvx) > 120) dirFace = gvx > 0 ? 1 : -1;
+      var tilt = RM ? 0 : clamp(gvx / 90, -14, 14);
+      flip.style.transform = 'scaleX(' + (jp2 === 'jet-voando' ? dirFace : 1) + ') rotate(' + tilt.toFixed(1) + 'deg)';
+      arc = RM ? 0 : 4 * Math.sin(now / 140);
+    } else if (settle && !leap) {
+      // soltou: balança no ar até se estabilizar e pousa
+      var k = (now - settle.t0) / settle.dur;
+      if (k >= 1) { settle = null; flame(false); flip.style.transform = 'scaleX(' + faceTo + ')'; setPose(IDLE[curSec] || 'joinha'); hopNow(); }
+      else {
+        setPose('jet-pairando'); flame(true, 'jet-pairando', k < 0.8 ? 1 : 1 - (k - 0.8) * 3);
+        var damp = Math.exp(-3.6 * k), rot = RM ? 0 : settle.amp * damp * Math.sin(k * 19);
+        flip.style.transform = 'scaleX(1) rotate(' + rot.toFixed(1) + 'deg)';
+        arc = RM ? 0 : (k < 0.75 ? 12 + settle.bob * damp * Math.sin(k * 15) : 12 * (1 - (k - 0.75) / 0.25));
+      }
+    }
     box.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + (-(y + arc)).toFixed(1) + 'px,0)';
   }
 
   // arrastar para qualquer lugar; clique = reação; duplo clique = volta ao canto
   box.addEventListener('pointerdown', function (e) {
-    drag = { px: e.clientX, py: e.clientY, ox: x, oy: y, moved: false, id: e.pointerId };
+    drag = { px: e.clientX, py: e.clientY, ox: x, oy: y, moved: false, id: e.pointerId, t0: performance.now(), lx: e.clientX, ly: e.clientY, lt: performance.now(), vx: 0, vy: 0, jet: false };
     try { box.setPointerCapture(e.pointerId); } catch (_) {}
   });
   box.addEventListener('pointermove', function (e) {
     if (!drag || e.pointerId !== drag.id) return;
     var dx = e.clientX - drag.px, dy = e.clientY - drag.py, d = dims();
+    var tn = performance.now(), ddt = Math.max(8, tn - drag.lt) / 1000;            // velocidade do arrasto (para inclinar e balançar)
+    drag.vx = drag.vx * 0.6 + (e.clientX - drag.lx) / ddt * 0.4; drag.vy = drag.vy * 0.6 + (e.clientY - drag.ly) / ddt * 0.4;
+    drag.lx = e.clientX; drag.ly = e.clientY; drag.lt = tn;
     if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 6) return;
-    if (!drag.moved) { drag.moved = true; flyOn = false; flyBack = false; box.classList.add('dragging'); walking = false; leap = null; flame(false); flip.style.opacity = 1; flip.style.transform = 'scaleX(1)'; reactUntil = 0; setPose(IDLE[curSec] || 'joinha'); }
+    if (!drag.moved) { drag.moved = true; flyOn = false; flyBack = false; box.classList.add('dragging'); walking = false; leap = null; flame(false); flip.style.opacity = 1; flip.style.transform = 'scaleX(1)'; reactUntil = 0; settle = null; }
     pos = clamp(drag.ox + dx, 0, d.maxX); offY = clamp(drag.oy - dy, 0, d.maxY);
     e.preventDefault();
   });
   function end(e) {
     if (!drag || (e && e.pointerId !== drag.id)) return;
-    var moved = drag.moved; drag = null; box.classList.remove('dragging');
+    var moved = drag.moved, jet = drag.jet, rvx = drag.vx || 0, rvy = drag.vy || 0; drag = null; box.classList.remove('dragging');
     var now = performance.now();
-    if (moved) { parked = true; parkedScroll = 0; reactUntil = 0; setPose(IDLE[curSec] || 'joinha'); hopNow(); }   // onde você soltar, ele fica
+    if (moved || jet) {                                                // onde você soltar, ele fica: balança no ar até se estabilizar
+      if (moved) { parked = true; parkedScroll = 0; }
+      reactUntil = 0; walking = false;
+      var sp2 = Math.min(1, Math.hypot(rvx, rvy) / 1400);
+      settle = { t0: now, dur: RM ? 300 : 1300 + 600 * sp2, amp: (rvx < 0 ? -1 : 1) * (7 + 13 * sp2), bob: 4 + 8 * sp2 };
+    }
     else if (!RM && !leap) { var tp = ['jump', 'jet', 'tele', 'jump'][reactI++ % 4]; startMove(tp, x); }
     else { reactI = (reactI + 1) % REACT.length; setPose(REACT[reactI]); reactUntil = now + 1800; hopNow(); }
   }
