@@ -8,7 +8,7 @@
   var ZP = 4;                        // distância do jogador até a câmera
   var FAR = 50;                      // até onde se desenha
   var G = 34, JUMP_V = 12.2;         // gravidade e impulso do pulo
-  var SLIDE_T = 0.72, JET_T = 5.5, JET_Y = 3.3;
+  var SLIDE_T = 0.72, JET_T = 5.5, JET_Y = 3.3, IMA_T = 8;
   var V0 = 15, VMAX = 34, ACC = 0.32;
   var KEY_BEST = 'forja-jogo-recorde';
 
@@ -20,10 +20,14 @@
     '<canvas class="jg-cv" aria-label="Jogo. Arraste para os lados para trocar de faixa, para cima para pular e para baixo para deslizar."></canvas>' +
     '<div class="jg-hud"><div class="jg-pts"><b class="jg-n">0</b><span>clientes</span></div><div class="jg-dist"></div>' +
       '<button type="button" class="jg-x" aria-label="Sair do jogo">✕</button></div>' +
-    '<div class="jg-jet" hidden><i></i></div>' +
+    '<div class="jg-pw">' +
+      '<span class="pw" data-k="jet" hidden><img src="assets/jogo/p-jet.webp?v=1" alt="Jetpack"><i><b></b></i></span>' +
+      '<span class="pw" data-k="ima" hidden><img src="assets/jogo/p-ima.webp?v=1" alt="Ímã"><i><b></b></i></span>' +
+      '<span class="pw" data-k="escudo" hidden><img src="assets/jogo/p-escudo.webp?v=1" alt="Escudo"></span>' +
+    '</div>' +
     '<div class="jg-tela jg-inicio">' +
       '<p class="jg-k">Mini game</p><h2>Forjabô na Avenida</h2>' +
-      '<ul class="jg-ajuda"><li><span class="jg-g">⇆</span>Arraste para o lado: troca de faixa</li><li><span class="jg-g">⇡</span>Arraste para cima: pula carro e cavalete</li><li><span class="jg-g">⇣</span>Arraste para baixo: passa por baixo do caminhão</li><li><span class="jg-g">🚀</span>Pegue o jetpack e voe por cima de tudo</li></ul>' +
+      '<ul class="jg-ajuda"><li><span class="jg-g">⇆</span>Arraste para o lado: troca de faixa</li><li><span class="jg-g">⇡</span>Arraste para cima: pula carro e cavalete</li><li><span class="jg-g">⇣</span>Arraste para baixo: passa por baixo do caminhão</li><li><span class="jg-g"><img src="assets/jogo/p-jet.webp?v=1" alt=""></span>Jetpack: voa por cima de tudo</li><li><span class="jg-g"><img src="assets/jogo/p-ima.webp?v=1" alt=""></span>Ímã: puxa os clientes das outras faixas</li><li><span class="jg-g"><img src="assets/jogo/p-escudo.webp?v=1" alt=""></span>Escudo: aguenta uma batida</li></ul>' +
       '<p class="jg-rec"></p><button type="button" class="jg-btn jg-go">Toque para jogar</button>' +
     '</div>' +
     '<div class="jg-tela jg-fim" hidden>' +
@@ -33,7 +37,13 @@
     '</div>';
   document.body.appendChild(root);
   var cv = root.querySelector('.jg-cv'), ctx = cv.getContext('2d', { alpha: false });
-  var elN = root.querySelector('.jg-n'), elDist = root.querySelector('.jg-dist'), elJet = root.querySelector('.jg-jet'), elJetBar = elJet.querySelector('i');
+  var elN = root.querySelector('.jg-n'), elDist = root.querySelector('.jg-dist');
+  var PW = {}; [].forEach.call(root.querySelectorAll('.pw'), function (e) { PW[e.dataset.k] = { el: e, bar: e.querySelector('b'), on: false }; });
+  function hudPoder(k, frac) {                         // mostra/esconde o selo do poder e a barra de tempo
+    var p = PW[k], on = frac > 0;
+    if (on !== p.on) { p.on = on; p.el.hidden = !on; }
+    if (on && p.bar) p.bar.style.transform = 'scaleX(' + Math.min(1, frac).toFixed(3) + ')';
+  }
   var telaIni = root.querySelector('.jg-inicio'), telaFim = root.querySelector('.jg-fim');
 
   var DPR_MAX = 2, lentos = 0, W = 0, H = 0, DPR = 1, f = 1, camH = 6, horizon = 0, playerY = 0;
@@ -58,7 +68,7 @@
 
   /* ---------- artes (etapa 2): Forjabô de costas e veículos de trás ---------- */
   var IMG = {};
-  ['r-corre-1', 'r-corre-2', 'r-pulo', 'r-desliza', 'r-jet', 'r-tonto', 'v-carro', 'v-caminhao', 'v-onibus', 'v-cavalete'].forEach(function (n) {
+  ['r-corre-1', 'r-corre-2', 'r-pulo', 'r-desliza', 'r-jet', 'r-tonto', 'v-carro', 'v-caminhao', 'v-onibus', 'v-cavalete', 'c-agenda', 'c-estrela', 'c-carrinho', 'p-jet', 'p-ima', 'p-escudo'].forEach(function (n) {
     var im = new Image(); im.decoding = 'async'; im.src = 'assets/jogo/' + n + '.webp?v=1';
     im.onload = function () { if (im.decode) im.decode().catch(function () {}); };
     IMG[n] = im;
@@ -70,7 +80,7 @@
   var obs = [], coins = [], items = [], blds = [], lamps = [];
   function novoJogo() {
     S = { on: false, over: false, t: 0, v: V0, dist: 0, pts: 0, lane: 0, x: 0, y: 0, vy: 0, slide: 0, jet: 0, jetY: 0,
-          run: 0, nextRow: 26, nextJet: 380, hit: 0, shake: 0, combo: 0 };
+          run: 0, nextRow: 26, nextItem: 320, hit: 0, shake: 0, combo: 0, ima: 0, escudo: false, inv: 0, flash: 0 };
     obs.length = 0; coins.length = 0; items.length = 0;
     blds.length = 0; lamps.length = 0;
     for (var z = 2; z < FAR + 20; z += 0) z = addBld(z);
@@ -106,10 +116,14 @@
     // fileira de clientes na faixa livre (às vezes em arco para pular)
     if (Math.random() < 0.7) {
       var arco = Math.random() < 0.3;
-      for (var i = 0; i < 6; i++) coins.push({ lane: livre, z: z - 4 + i * 1.6, y: arco ? 0.7 + Math.sin(i / 5 * Math.PI) * 1.7 : 0.7, ic: (i + (z | 0)) % 3 });
+      for (var i = 0; i < 6; i++) coins.push({ lane: livre, x: livre * LANE, z: z - 4 + i * 1.6, y: arco ? 0.8 + Math.sin(i / 5 * Math.PI) * 1.7 : 0.8, ic: (i + (z | 0)) % 3 });
     }
-    // jetpack de vez em quando
-    if (S.dist > S.nextJet && !S.jet) { items.push({ lane: livre, z: z + 6, y: 0.9 }); S.nextJet = S.dist + 500 + Math.random() * 300; }
+    // poderes de vez em quando: jetpack, ímã ou escudo (sem repetir o que já está ativo)
+    if (S.dist > S.nextItem) {
+      var ops = ['jet', 'jet', 'ima', 'escudo'].filter(function (k) { return !(k === 'jet' && S.jet) && !(k === 'ima' && S.ima) && !(k === 'escudo' && S.escudo); });
+      if (ops.length) items.push({ k: ops[(Math.random() * ops.length) | 0], lane: livre, z: z + 6, y: 1.1 });
+      S.nextItem = S.dist + 340 + Math.random() * 260;
+    }
   }
 
   /* ---------- entrada ---------- */
@@ -160,12 +174,13 @@
     if (S.jet > 0) {
       S.jet -= dt; S.jetY += (JET_Y - S.jetY) * Math.min(1, dt * 4); S.y = S.jetY; S.vy = 0;
       if (S.jet <= 0) { S.vy = 0; S.jetY = 0; }
-      elJet.hidden = false; elJetBar.style.transform = 'scaleX(' + Math.max(0, S.jet / JET_T) + ')';
     } else {
-      elJet.hidden = true;
       if (S.y > 0 || S.vy > 0) { S.vy -= G * dt; S.y += S.vy * dt; if (S.y <= 0) { S.y = 0; S.vy = 0; } }
     }
     if (S.slide > 0) S.slide -= dt;
+    if (S.ima > 0) S.ima = Math.max(0, S.ima - dt);
+    if (S.inv > 0) S.inv = Math.max(0, S.inv - dt);
+    hudPoder('jet', S.jet > 0 ? S.jet / JET_T : 0); hudPoder('ima', S.ima / IMA_T); hudPoder('escudo', S.escudo ? 1 : 0);
     // mundo anda na direção do jogador
     var i;
     for (i = 0; i < obs.length; i++) obs[i].z -= dz;
@@ -183,18 +198,27 @@
     for (i = obs.length - 1; i >= 0; i--) {
       var o = obs[i], T = TIPO[o.t];
       if (o.z + T.len < 0) { obs.splice(i, 1); continue; }
-      if (S.jet > 0) continue;
+      if (S.jet > 0 || S.inv > 0) continue;
       var ox = o.lane * LANE;
       if (Math.abs(S.x - ox) > (T.w + pw) / 2 * 0.82) continue;
       if (ZP < o.z - 0.3 || ZP > o.z + T.len) continue;
       if (S.y + ph <= T.solid[0] || S.y >= T.solid[1]) continue;
-      // se o lado bateu por troca de faixa, perdoa um pouquinho
+      if (S.escudo) {                                     // escudo: o obstáculo é jogado para longe e o robô segue
+        S.escudo = false; S.inv = 1.1; S.flash = 1; S.shake = RM ? 0 : 0.45; obs.splice(i, 1);
+        if (navigator.vibrate) try { navigator.vibrate(30); } catch (_) {}
+        continue;
+      }
       return bater(o);
     }
     for (i = coins.length - 1; i >= 0; i--) {
       var c = coins[i];
       if (c.z < 0) { coins.splice(i, 1); continue; }
-      if (Math.abs(c.z - ZP) < 0.9 && Math.abs(S.x - c.lane * LANE) < 1.2 && Math.abs(c.y - (S.y + 1.2)) < 1.6) {
+      if (c.x === undefined) c.x = c.lane * LANE;
+      if (S.ima > 0 && c.z < ZP + 16 && c.z > ZP - 1) {    // ímã: os clientes voam até o robô
+        var kk = Math.min(1, dt * (c.z < ZP + 6 ? 12 : 5));
+        c.x += (S.x - c.x) * kk; c.y += (S.y + 1.2 - c.y) * kk;
+      }
+      if (Math.abs(c.z - ZP) < 0.9 && Math.abs(S.x - c.x) < 1.2 && Math.abs(c.y - (S.y + 1.2)) < 1.6) {
         coins.splice(i, 1); S.pts++; elN.textContent = S.pts; pop();
       }
     }
@@ -202,13 +226,19 @@
       var it = items[i];
       if (it.z < 0) { items.splice(i, 1); continue; }
       if (Math.abs(it.z - ZP) < 1 && Math.abs(S.x - it.lane * LANE) < 1.3 && S.y < 2.5) {
-        items.splice(i, 1); S.jet = JET_T; S.jetY = S.y; S.slide = 0;
-        for (var k = 0; k < 26; k++) coins.push({ lane: [-1, 0, 1][(k / 9 | 0) % 3], z: ZP + 6 + k * 2.2, y: JET_Y + 0.6, ic: k % 3 });
+        items.splice(i, 1); pegouPoder();
+        if (it.k === 'ima') S.ima = IMA_T;
+        else if (it.k === 'escudo') S.escudo = true;
+        else {
+          S.jet = JET_T; S.jetY = S.y; S.slide = 0;
+          for (var k = 0; k < 26; k++) { var ln = [-1, 0, 1][(k / 9 | 0) % 3]; coins.push({ lane: ln, x: ln * LANE, z: ZP + 6 + k * 2.2, y: JET_Y + 1.0, ic: k % 3 }); }
+        }
       }
     }
     elDist.textContent = Math.floor(S.dist) + ' m';
   }
   var popT = 0;
+  function pegouPoder() { S.flash = 0.7; if (navigator.vibrate) try { navigator.vibrate(15); } catch (_) {} }
   function pop() { popT = 1; elN.parentNode.classList.remove('pop'); void elN.offsetWidth; elN.parentNode.classList.add('pop'); if (navigator.vibrate) try { navigator.vibrate(6); } catch (_) {} }
   function bater(o) {
     S.on = false; S.over = true; S.hit = 1; S.shake = RM ? 0 : 1;
@@ -270,6 +300,7 @@
     // brilho do horizonte
     if (!GH || GH.h !== horizon) { GH = ctx.createLinearGradient(0, horizon - 30, 0, horizon + 40); GH.addColorStop(0, 'rgba(255,211,154,0)'); GH.addColorStop(0.5, 'rgba(255,211,154,.35)'); GH.addColorStop(1, 'rgba(255,211,154,0)'); GH.h = horizon; }
     ctx.fillStyle = GH; ctx.fillRect(-20, horizon - 30, W + 40, 70);
+    if (S.flash > 0) { S.flash = Math.max(0, S.flash - dt * 2.2); ctx.fillStyle = 'rgba(61,232,240,' + (S.flash * 0.22) + ')'; ctx.fillRect(-20, -20, W + 40, H + 40); }
     if (S.hit > 0) { S.hit = Math.max(0, S.hit - dt * 1.6); ctx.fillStyle = 'rgba(255,60,40,' + (S.hit * 0.35) + ')'; ctx.fillRect(-20, -20, W + 40, H + 40); }
   }
   function desenhaPredio(bd, SW) {
@@ -350,18 +381,32 @@
     ctx.globalAlpha = 1;
   }
   function sombra(hex) { var n = parseInt(hex.slice(1), 16), r = (n >> 16) * 0.75, g = ((n >> 8) & 255) * 0.75, b = (n & 255) * 0.75; return 'rgb(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ')'; }
-  var ICON = ['📅', '⭐', '🛒'];
+  var ICON = ['📅', '⭐', '🛒'], CIMG = ['c-agenda', 'c-estrela', 'c-carrinho'];
   function desenhaCliente(c) {
-    var z = c.z, s = sc(z), x = px(c.lane * LANE, z), y = py(c.y, z), r = 0.42 * s, gir = Math.cos(S.run * 0.5 + c.z) ;
+    var z = c.z, s = sc(z), x = px(c.x === undefined ? c.lane * LANE : c.x, z), y = py(c.y, z), r = 0.42 * s, gir = Math.cos(S.run * 0.35 + c.z * 0.4);
     ctx.globalAlpha = nevoa(z);
+    var im = pronta(CIMG[c.ic]);
+    if (im) {                                          // moeda girando: largura acompanha o giro
+      var d = r * 2.3, wv = Math.max(0.12, Math.abs(gir));
+      ctx.drawImage(im, x - d * wv / 2, y - d / 2, d * wv, d);
+      ctx.globalAlpha = 1; return;
+    }
     ctx.fillStyle = 'rgba(61,232,240,.25)'; ctx.beginPath(); ctx.arc(x, y, r * 1.35, 0, 7); ctx.fill();
     ctx.fillStyle = '#3de8f0'; ctx.beginPath(); ctx.ellipse(x, y, Math.max(2, r * Math.abs(gir)), r, 0, 0, 7); ctx.fill();
     if (r > 9 && Math.abs(gir) > 0.5) { ctx.font = Math.round(r * 1.1) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ICON[c.ic], x, y + 1); }
     ctx.globalAlpha = 1;
   }
   function desenhaJet(it) {
-    var z = it.z, s = sc(z), x = px(it.lane * LANE, z), y = py(it.y + Math.sin(S.run) * 0.15, z), r = 0.6 * s;
+    var z = it.z, s = sc(z), x = px(it.lane * LANE, z), y = py(it.y + Math.sin(S.run * 0.5) * 0.18, z), r = 0.6 * s;
     ctx.globalAlpha = nevoa(z);
+    var im = pronta('p-' + (it.k || 'jet'));
+    if (im) {
+      ctx.fillStyle = it.k === 'ima' ? 'rgba(255,80,60,.22)' : it.k === 'escudo' ? 'rgba(61,232,240,.25)' : 'rgba(255,176,59,.25)';
+      ctx.beginPath(); ctx.arc(x, y, r * 1.6, 0, 7); ctx.fill();
+      var d = r * 2.5, ar = im.naturalWidth / im.naturalHeight;
+      ctx.drawImage(im, x - d * ar / 2, y - d / 2, d * ar, d);
+      ctx.globalAlpha = 1; return;
+    }
     ctx.fillStyle = 'rgba(255,176,59,.3)'; ctx.beginPath(); ctx.arc(x, y, r * 1.5, 0, 7); ctx.fill();
     ctx.fillStyle = '#ffb03b'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
     if (r > 8) { ctx.font = Math.round(r * 1.15) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🚀', x, y + 1); }
@@ -382,8 +427,19 @@
       var bob = !fly && !sl && S.y <= 0.05 && S.on ? Math.abs(Math.sin(ph)) * 0.07 * s : fly ? Math.sin(S.run * 0.6) * 0.05 * s : 0;
       ctx.save(); ctx.translate(x, y - bob); ctx.rotate(-tilt * 1.4);
       if (fly) { ctx.globalAlpha = 0.85 + Math.random() * 0.15; }
+      if (S.inv > 0 && Math.floor(S.inv * 12) % 2) ctx.globalAlpha = 0.35;     // pisca depois que o escudo salvou
       ctx.drawImage(im, -ww / 2, -hh, ww, hh);
-      ctx.restore(); ctx.globalAlpha = 1;
+      ctx.globalAlpha = 1;
+      if (S.escudo) {                                  // bolha do escudo
+        var pul = 1 + Math.sin(S.run * 0.3) * 0.03;
+        ctx.strokeStyle = 'rgba(61,232,240,.85)'; ctx.lineWidth = Math.max(2, 0.06 * s); ctx.fillStyle = 'rgba(61,232,240,.12)';
+        ctx.beginPath(); ctx.ellipse(0, -hh * 0.5, ww * 0.72 * pul, hh * 0.62 * pul, 0, 0, 7); ctx.fill(); ctx.stroke();
+      }
+      if (S.ima > 0) {                                 // aura do ímã
+        ctx.strokeStyle = 'rgba(255,90,70,' + (0.35 + 0.25 * Math.sin(S.run)) + ')'; ctx.lineWidth = Math.max(1.5, 0.04 * s);
+        ctx.beginPath(); ctx.arc(0, -hh * 0.55, ww * (0.8 + 0.1 * Math.sin(S.run * 0.7)), 0, 7); ctx.stroke();
+      }
+      ctx.restore();
       return;
     }
     ctx.save(); ctx.translate(x, y); ctx.rotate(-tilt);
