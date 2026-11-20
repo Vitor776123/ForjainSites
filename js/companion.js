@@ -108,16 +108,31 @@
 
   // ---- obstáculos: texto, cartão, foto, botão. Ele só anda no espaço livre ao lado deles ----
   var OBST = 'main h2, main p, main .trio article, main .steps li, main .card, main .photo, main .btn, footer a, footer p';
-  function obstacles(top, bottom) {
-    var out = [], list = document.querySelectorAll(OBST);
+  // as medidas dos blocos ficam guardadas (em coordenadas da página) e são refeitas só a cada 0,6 s:
+  // medir tudo a cada quadro travava a rolagem no celular
+  var obsCache = null, obsT = 0;
+  function measureObstacles() {
+    var out = [], list = document.querySelectorAll(OBST), sy = window.scrollY;
     for (var i = 0; i < list.length; i++) {
       var el = list[i], r;
       if ((el.tagName === 'H2' || el.tagName === 'P') && el.closest('article,li,.card')) continue;   // o cartão já cobre
       if (el.tagName === 'H2' || el.tagName === 'P' || el.tagName === 'A' && !el.classList.contains('btn')) {
         var rg = document.createRange(); rg.selectNodeContents(el); r = rg.getBoundingClientRect();    // largura real do texto
       } else r = el.getBoundingClientRect();
-      if (r.width < 2 || r.bottom < top + 14 || r.top > bottom - 14) continue;
-      out.push([r.left, r.right]);
+      if (r.width < 2) continue;
+      out.push([r.left, r.right, r.top + sy, r.bottom + sy]);
+    }
+    return out;
+  }
+  window.addEventListener('resize', function () { obsCache = null; });
+  function obstacles(top, bottom) {
+    var now = performance.now();
+    if (!obsCache || now - obsT > 600) { obsCache = measureObstacles(); obsT = now; }
+    var out = [], sy = window.scrollY;
+    for (var i = 0; i < obsCache.length; i++) {
+      var o = obsCache[i];
+      if (o[3] - sy < top + 14 || o[2] - sy > bottom - 14) continue;
+      out.push([o[0], o[1]]);
     }
     out.sort(function (a, b) { return a[0] - b[0]; });
     var m = [];

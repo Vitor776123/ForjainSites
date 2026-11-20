@@ -65,10 +65,11 @@ a{color:inherit}
 .stage .layer{position:absolute;left:0;top:0;height:100%;will-change:transform}
 .sky{position:absolute;inset:0;background:linear-gradient(180deg,#26356a 0%,#5d5a98 26%,#e5806b 56%,#ffbf78 76%,#ffe3ab 100%)}
 .sun{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,244,205,.95) 0 14%,rgba(255,214,150,.55) 30%,rgba(255,180,120,0) 68%)}
-.cloud{position:absolute;border-radius:999px;background:rgba(255,205,175,.38);filter:blur(7px);animation:drift linear infinite}
+.cloud{position:absolute;border-radius:999px;background:radial-gradient(closest-side,rgba(255,205,175,.4) 55%,rgba(255,205,175,0));animation:drift linear infinite;will-change:transform}   /* borda suave sem blur (blur animado pesa no celular) */
 @keyframes drift{from{transform:translateX(-30vw)}to{transform:translateX(130vw)}}
-.far{filter:saturate(.55) brightness(1.04)}
-.mid{filter:saturate(.8) brightness(.98)}
+/* o filtro vai em cada prédio (pintado uma vez) e não na camada inteira que se move a cada quadro */
+.far>img{filter:saturate(.55) brightness(1.04)}
+.mid>img{filter:saturate(.8) brightness(.98)}
 .haze{position:absolute;left:0;pointer-events:none}
 .sidewalk{position:absolute;background:linear-gradient(#cfc7bb,#b8afa3)}
 .sidewalk::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(0,0,0,.09) 0 2px,transparent 2px var(--tile))}
@@ -79,6 +80,7 @@ a{color:inherit}
 
 .stage img{max-width:none;-webkit-user-drag:none;user-select:none;pointer-events:none}
 .prop,.bld,.car{position:absolute;left:0;top:0}
+.car{will-change:transform}   /* cada carro na sua própria camada: mover não redesenha a rua */
 
 /* lojas */
 .shop{position:absolute;padding:0;border:0;background:none;cursor:pointer;transition:filter .2s,transform .2s;-webkit-tap-highlight-color:transparent}
@@ -117,7 +119,7 @@ a{color:inherit}
 .rbob{position:absolute;left:0;top:0}
 .robot.idle .rbob{animation:bob 2.4s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-.rframe{position:absolute;left:0;bottom:0;visibility:hidden}
+.rframe{position:absolute;left:0;bottom:0;visibility:hidden;will-change:transform}   /* trocar de pose só mostra/esconde, sem redesenhar */
 .rframe.on{visibility:visible}
 .rshadow{position:absolute;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.38),rgba(0,0,0,0) 70%)}
 .roadbg{z-index:4}
@@ -530,4 +532,11 @@ body.mini-on .foot{padding-bottom:calc(58px + env(safe-area-inset-bottom))}
   .pl-go{padding-top:8px}
   .pl-open{padding:.7em 1em;font-size:.92rem}
   .contact .lead{margin:.7rem auto 1.2rem}
+}
+
+/* celular: sem desfoque de fundo (backdrop-filter) sobre a rua animada; ele é refeito a cada quadro e trava a animação */
+@media (hover:none),(max-width:720px){
+  .topbar{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(10,11,13,.82)}
+  .stick{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(10,11,13,.5)}
+  .hint,.buddy-toggle{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(10,11,13,.82)}
 }
