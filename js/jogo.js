@@ -5,6 +5,7 @@
   'use strict';
   var RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var LANE = 2.6;                    // largura de uma faixa (unidades do mundo)
+  var NL = 4, FAIXAS = [-1.5, -0.5, 0.5, 1.5];   // 4 faixas; a posição de cada uma é faixa × LANE
   var ZP = 4;                        // distância do jogador até a câmera
   var FAR = 50;                      // até onde se desenha
   var G = 34, JUMP_V = 12.2;         // gravidade e impulso do pulo
@@ -27,7 +28,7 @@
     '</div>' +
     '<div class="jg-tela jg-inicio">' +
       '<p class="jg-k">Mini game</p><h2>Forjabô na Avenida</h2>' +
-      '<ul class="jg-ajuda"><li><span class="jg-g">⇆</span>Arraste para o lado: troca de faixa</li><li><span class="jg-g">⇡</span>Arraste para cima: pula carro e cavalete</li><li><span class="jg-g">⇣</span>Arraste para baixo: passa por baixo do caminhão</li><li><span class="jg-g"><img src="assets/jogo/p-jet.webp?v=1" alt=""></span>Jetpack: voa por cima de tudo</li><li><span class="jg-g"><img src="assets/jogo/p-ima.webp?v=1" alt=""></span>Ímã: puxa os clientes das outras faixas</li><li><span class="jg-g"><img src="assets/jogo/p-escudo.webp?v=1" alt=""></span>Escudo: aguenta uma batida</li></ul>' +
+      '<ul class="jg-ajuda"><li><span class="jg-g">⇆</span>Arraste para o lado: troca de faixa</li><li><span class="jg-g">⇡</span>Arraste para cima: sobe por cima de carro e cavalete</li><li><span class="jg-g">⇣</span>Arraste para baixo: voa rente ao chão, por baixo do caminhão</li><li><span class="jg-g"><img src="assets/jogo/p-jet.webp?v=1" alt=""></span>Turbo: voa bem alto, por cima de tudo</li><li><span class="jg-g"><img src="assets/jogo/p-ima.webp?v=1" alt=""></span>Ímã: puxa os clientes das outras faixas</li><li><span class="jg-g"><img src="assets/jogo/p-escudo.webp?v=1" alt=""></span>Escudo: aguenta uma batida</li></ul>' +
       '<p class="jg-rec"></p><button type="button" class="jg-btn jg-go">Toque para jogar</button>' +
     '</div>' +
     '<div class="jg-tela jg-fim" hidden>' +
@@ -54,7 +55,7 @@
     cv.style.width = W + 'px'; cv.style.height = H + 'px';
     // as 3 faixas ocupam ~92% da largura na altura do jogador (máx. 560px em tela larga)
     var road = Math.min(W * 0.92, 560, H * (W > H ? 0.75 : 0.9));
-    f = road * ZP / (LANE * 3);
+    f = road * ZP / (LANE * NL);
     playerY = H * (W > H ? 0.86 : 0.83);
     horizon = H * (W > H ? 0.34 : 0.40);
     camH = (playerY - horizon) * ZP / f;
@@ -79,7 +80,7 @@
   var S = {};
   var obs = [], coins = [], items = [], blds = [], lamps = [];
   function novoJogo() {
-    S = { on: false, over: false, t: 0, v: V0, dist: 0, pts: 0, lane: 0, x: 0, y: 0, vy: 0, slide: 0, jet: 0, jetY: 0,
+    S = { on: false, over: false, t: 0, v: V0, dist: 0, pts: 0, lane: 0.5, x: 0.5 * LANE, y: 0, vy: 0, slide: 0, jet: 0, jetY: 0,
           run: 0, nextRow: 26, nextItem: 320, hit: 0, shake: 0, combo: 0, ima: 0, escudo: false, inv: 0, flash: 0 };
     obs.length = 0; coins.length = 0; items.length = 0;
     blds.length = 0; lamps.length = 0;
@@ -106,8 +107,8 @@
   var CORES = ['#d6453d', '#2f6fd6', '#f2f2f2', '#2b2f36', '#f2b13a', '#3aa36b', '#9aa3ad'];
   function linha(z) {
     var dif = Math.min(1, S.t / 90);
-    var lanes = [-1, 0, 1], livre = lanes[(Math.random() * 3) | 0];
-    var n = Math.random() < 0.35 + dif * 0.4 ? 2 : 1;           // mais faixas ocupadas com o tempo
+    var lanes = FAIXAS, livre = lanes[(Math.random() * NL) | 0];
+    var n = 1 + (Math.random() < 0.4 + dif * 0.4 ? 1 : 0) + (dif > 0.35 && Math.random() < 0.2 + dif * 0.35 ? 1 : 0);   // mais faixas ocupadas com o tempo (sempre sobra uma)
     var ocup = lanes.filter(function (l) { return l !== livre; }).sort(function () { return Math.random() - .5; }).slice(0, n);
     ocup.forEach(function (l) {
       var r = Math.random(), t = r < 0.42 ? 'car' : r < 0.66 ? 'truck' : r < 0.84 ? 'bar' : 'bus';
@@ -130,8 +131,8 @@
   var toque = null;
   function acao(a) {
     if (!S.on) return;
-    if (a === 'L' && S.lane > -1) { S.lane--; }
-    else if (a === 'R' && S.lane < 1) { S.lane++; }
+    if (a === 'L' && S.lane > FAIXAS[0]) { S.lane--; }
+    else if (a === 'R' && S.lane < FAIXAS[NL - 1]) { S.lane++; }
     else if (a === 'U' && !S.jet) { if (S.y <= 0.001) { S.vy = JUMP_V; S.slide = 0; } }
     else if (a === 'D' && !S.jet) { if (S.y > 0.05) S.vy = -JUMP_V * 1.4; S.slide = SLIDE_T; }   // no ar: desce rápido e já desliza
   }
@@ -231,7 +232,7 @@
         else if (it.k === 'escudo') S.escudo = true;
         else {
           S.jet = JET_T; S.jetY = S.y; S.slide = 0;
-          for (var k = 0; k < 26; k++) { var ln = [-1, 0, 1][(k / 9 | 0) % 3]; coins.push({ lane: ln, x: ln * LANE, z: ZP + 6 + k * 2.2, y: JET_Y + 1.0, ic: k % 3 }); }
+          for (var k = 0; k < 26; k++) { var ln = FAIXAS[(k / 7 | 0) % NL]; coins.push({ lane: ln, x: ln * LANE, z: ZP + 6 + k * 2.2, y: JET_Y + 1.0, ic: k % 3 }); }
         }
       }
     }
@@ -270,7 +271,7 @@
     ctx.fillStyle = '#2b2f36'; ctx.fillRect(-20, horizon, W + 40, H - horizon + 20);
     var zn = 0.9, zf = FAR;
     // calçadas e rua
-    var RE = LANE * 1.5, SW = RE + 3.2;
+    var RE = LANE * NL / 2, SW = RE + 3.2;
     quad([px(-SW, zn), py(0, zn)], [px(-SW, zf), py(0, zf)], [px(SW, zf), py(0, zf)], [px(SW, zn), py(0, zn)], '#cfc8bc');
     quad([px(-RE, zn), py(0, zn)], [px(-RE, zf), py(0, zf)], [px(RE, zf), py(0, zf)], [px(RE, zn), py(0, zn)], '#33373e');
     // guias
@@ -281,7 +282,7 @@
       var z2 = Math.min(zf, z + 3);
       if (z2 <= zn) continue;
       var za = Math.max(zn, z);
-      [-LANE / 2, LANE / 2].forEach(function (xx) { quad([px(xx - 0.1, za), py(0, za)], [px(xx - 0.1, z2), py(0, z2)], [px(xx + 0.1, z2), py(0, z2)], [px(xx + 0.1, za), py(0, za)], 'rgba(242,214,90,.85)'); });
+      [-LANE, 0, LANE].forEach(function (xx) { quad([px(xx - 0.1, za), py(0, za)], [px(xx - 0.1, z2), py(0, z2)], [px(xx + 0.1, z2), py(0, z2)], [px(xx + 0.1, za), py(0, za)], 'rgba(242,214,90,.85)'); });
     }
     // prédios (fundo para frente)
     for (var b = blds.length - 1; b >= 0; b--) desenhaPredio(blds[b], SW);
@@ -417,16 +418,24 @@
     var z = ZP, s = sc(z), x = px(S.x, z), gy = py(0, z), y = py(S.y, z);
     var sl = S.slide > 0, fly = S.jet > 0, ph = S.run * 2.2;
     // sombra no chão
-    var k = Math.max(0.35, 1 - S.y / 6);
+    var k = Math.max(0.3, 0.8 - S.y / 7);
     ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, gy, 0.8 * s * k, 0.22 * s * k, 0, 0, 7); ctx.fill();
     var tilt = (S.lane * LANE - S.x) * 0.06;
-    var nome = S.over ? 'r-tonto' : fly ? 'r-jet' : sl ? 'r-desliza' : S.y > 0.05 ? 'r-pulo' : (Math.floor(S.run * 0.42) % 2 ? 'r-corre-2' : 'r-corre-1');
+    var nome = S.over ? 'r-tonto' : 'r-jet';               // ele sempre voa baixinho com o jetpack
     var im = pronta(nome);
     if (im) {
-      var hh = 2.55 * s * im.naturalHeight / 400 * (sl ? 0.85 : 1), ww = hh * im.naturalWidth / im.naturalHeight;
-      var bob = !fly && !sl && S.y <= 0.05 && S.on ? Math.abs(Math.sin(ph)) * 0.07 * s : fly ? Math.sin(S.run * 0.6) * 0.05 * s : 0;
-      ctx.save(); ctx.translate(x, y - bob); ctx.rotate(-tilt * 1.4);
-      if (fly) { ctx.globalAlpha = 0.85 + Math.random() * 0.15; }
+      var hh = 2.95 * s * im.naturalHeight / 400 * (sl ? 0.78 : 1), ww = hh * im.naturalWidth / im.naturalHeight;
+      var subindo = S.vy > 0.5, alto = S.y > 0.05;
+      var lift = S.over ? 0 : (sl ? 0.12 : 0.55) * s;                     // altura do voo baixinho (só no desenho)
+      var bob = S.over ? 0 : Math.sin(S.run * 0.22) * 0.07 * s;
+      var rot = -tilt * 1.6 + (sl ? 0.32 : subindo ? -0.1 : 0);           // ↓ inclina para a frente; ↑ inclina para trás
+      ctx.save(); ctx.translate(x, y - lift - bob); ctx.rotate(rot);
+      if (!S.over) {                                    // brilho das chamas (pisca)
+        var fz = (0.8 + Math.random() * 0.4) * (subindo || fly ? 1.4 : alto ? 1.15 : 1);
+        var gl = ctx.createRadialGradient(0, -hh * 0.12, 0, 0, -hh * 0.12, ww * 0.55 * fz);
+        gl.addColorStop(0, 'rgba(255,190,80,.55)'); gl.addColorStop(1, 'rgba(255,120,30,0)');
+        ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, -hh * 0.12, ww * 0.55 * fz, 0, 7); ctx.fill();
+      }
       if (S.inv > 0 && Math.floor(S.inv * 12) % 2) ctx.globalAlpha = 0.35;     // pisca depois que o escudo salvou
       ctx.drawImage(im, -ww / 2, -hh, ww, hh);
       ctx.globalAlpha = 1;
