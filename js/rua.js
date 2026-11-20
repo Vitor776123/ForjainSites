@@ -332,26 +332,16 @@ function paintShop(i) {
   c.setAttribute('aria-label', on ? nome + ': site no ar. Abrir a prévia.' : nome + ': sem site. Ativar para ver a dor.');
   el.setAttribute('aria-label', (on ? 'Ver o site de exemplo: ' : 'Sem site: ') + nome);
 }
-function explainShop(i) {
-  panelOpen[i] = true; paintShop(i);
-  if (i === activeIdx) hold('pensativo', 2);
+/* a loja acende quando o robô para na frente dela e apaga quando ele sai; um clique abre a prévia */
+function lightShop(i, on) {
+  siteOn[i] = on; panelOpen[i] = false; paintShop(i);
   const el = shopEls[i];
-  el.classList.remove('deny'); void el.offsetWidth; el.classList.add('deny');
-  setTimeout(() => el.classList.remove('deny'), 1500);
-  liveEl.textContent = SHOPS[i].kicker + ' ' + SHOPS[i].brand + ': sem site disponível. ' + SHOPS[i].dor + ' Pressione Enter de novo para ligar o site.';
-}
-function turnOnShop(i) {
-  siteOn[i] = true; panelOpen[i] = true; paintShop(i);
-  if (i === activeIdx) { hold(SHOP_POSE[SHOPS[i].slug] || 'joinha', 2.2); dust(4, 0); }
-  const el = shopEls[i];
-  el.classList.remove('deny', 'ignite'); void el.offsetWidth; el.classList.add('ignite');
-  setTimeout(() => el.classList.remove('ignite'), 1100);
-  liveEl.textContent = SHOPS[i].kicker + ' ' + SHOPS[i].brand + ': site no ar. ' + SHOPS[i].sol + ' Pressione Enter para ver a prévia.';
+  el.classList.remove('deny', 'ignite');
+  if (on) { void el.offsetWidth; el.classList.add('ignite'); setTimeout(() => el.classList.remove('ignite'), 1100); }
 }
 function shopAction(i) {
-  if (siteOn[i]) openShop(i);
-  else if (panelOpen[i]) turnOnShop(i);
-  else explainShop(i);
+  if (i === activeIdx) openShop(i);
+  else walkToShop(i, true);
 }
 const touchMQ = window.matchMedia('(hover:none),(max-width:720px)');
 function updateAct() {
@@ -370,11 +360,12 @@ function updateAct() {
 }
 function setActive(i) {
   if (i === activeIdx) return;
-  if (activeIdx >= 0) { shopEls[activeIdx].classList.remove('active'); pills[activeIdx].classList.remove('on'); panelOpen[activeIdx] = false; paintShop(activeIdx); }
+  if (activeIdx >= 0) { shopEls[activeIdx].classList.remove('active'); pills[activeIdx].classList.remove('on'); lightShop(activeIdx, false); }
   activeIdx = i;
   if (i >= 0) {
     shopEls[i].classList.add('active'); pills[i].classList.add('on');
-    liveEl.textContent = SHOPS[i].kicker + ' ' + SHOPS[i].brand + (siteOn[i] ? ': site no ar. Pressione Enter para ver a prévia.' : ': sem site. Pressione Enter para ver o que isso custa.');
+    lightShop(i, true);
+    liveEl.textContent = SHOPS[i].kicker + (SHOPS[i].brand ? ' ' + SHOPS[i].brand : '') + ': site no ar. Pressione Enter para ver a prévia.';
   }
   updateAct();
 }
@@ -421,7 +412,7 @@ function tick(t) {
     if (Math.abs(d) < .012) {
       robotU = targetU; targetU = null;
       const p = pendingShop; pendingShop = null; vel = 0;
-      if (p !== null) shopAction(p);
+      if (p !== null) { setActive(p); openShop(p); }   // chegou na loja que foi tocada: acende e abre
     } else desired = Math.sign(d) * Math.min(VMAX, Math.max(.14, Math.abs(d) * 2.4));
   }
   const vel0 = vel;
@@ -508,7 +499,7 @@ function tick(t) {
   else if (holdPose) pose = holdPose;
   else if (a >= 0) {
     facing = shopCx[a] >= robotU ? 1 : -1;
-    pose = (siteOn[a] && panelOpen[a]) ? (SHOP_POSE[SHOPS[a].slug] || 'joinha') : (panelOpen[a] ? 'pensativo' : 'apontando');
+    pose = 'apontando';   // na frente da loja acesa: aponta para a porta
   }
   else if (idleT > 4) { const k = (idleT - 4) % 10; pose = k < 4 ? 'celular' : (k < 7 ? 'pensativo' : 'andando-3'); }
   else pose = 'andando-3';
@@ -664,7 +655,7 @@ const endDrag = e => {
     if (Math.abs(was.x - rx) < ROBOT_H * H * .3 && was.y < ry2 && was.y > ry2 - ROBOT_H * H) { jump(); return; }
     const btn = was.target.closest && was.target.closest('.shop');
     const pill = was.target.closest && was.target.closest('.pill button');
-    if (pill) { shopAction(+pill.dataset.i); }
+    if (pill) { shopAction(+pill.dataset.i); }   // longe: o robô vai até a loja e abre; na frente: abre direto
     else if (btn) { const i = +btn.dataset.i; if (i === activeIdx) shopAction(i); else walkToShop(i, true); }
   }
 };
