@@ -1,4 +1,4 @@
-/* Palco da seção "A solução": o robô clica nos botões (pula, voa ou teleporta até eles). */
+/* Palco da seção "A solução": carrossel de negócios (arrastar ou setas) + pacotes; o robô clica nos botões. */
 (function () {
   var F = window.Forja, sec = document.getElementById('modelos'), grid = document.getElementById('grid');
   if (!F || !F.shops || !sec || !grid) return;
@@ -11,31 +11,57 @@
   ];
   var cur = 0, pk = 0, timer = 0;
 
+  var N = SH.length;
   var st = document.createElement('div'); st.className = 'palco';
   st.innerHTML =
-    '<div class="pl-row pl-shops" role="tablist" aria-label="Tipo de negócio">' + SH.map(function (s, i) {
-      return '<button type="button" class="pl-chip" role="tab" data-i="' + i + '"><img src="' + IMG(s.slug) + '" alt="" loading="lazy"><span>' + s.kicker + '</span></button>';
+    '<div class="pl-row pl-shops" aria-label="Tipo de negócio">' + SH.map(function (s, i) {
+      return '<button type="button" class="pl-chip" data-i="' + i + '"><img src="' + IMG(s.slug) + '" alt="" loading="lazy"><span>' + s.kicker + '</span></button>';
     }).join('') + '</div>' +
-    '<div class="pl-screen"><div class="pl-img"><img alt=""></div><div class="pl-txt"><p class="k"></p><h3></h3><p class="dor"></p><p class="sol"></p>' +
-    '<p class="pl-badge"><i></i> Site no ar (modelo)</p></div></div>' +
+    '<div class="pl-car" role="region" aria-roledescription="carrossel" aria-label="Modelos por tipo de negócio">' +
+    '<div class="pl-track" tabindex="0">' + SH.map(function (s, i) {
+      return '<article class="pl-screen pl-slide" data-i="' + i + '" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' de ' + N + ': ' + s.kicker + '">' +
+        '<div class="pl-img"><img src="' + IMG(s.slug) + '" alt="Fachada ilustrada da ' + s.kicker.toLowerCase() + ' ' + s.brand + '" loading="' + (i < 2 ? 'eager' : 'lazy') + '"></div>' +
+        '<div class="pl-txt"><p class="k"></p><h3>' + s.brand + '</h3><p class="dor">' + s.dor + '</p><p class="sol">' + s.sol + '</p>' +
+        '<p class="pl-badge"><i></i> Site no ar (modelo)</p></div></article>';
+    }).join('') + '</div>' +
+    '<div class="pl-nav">' +
+    '<button type="button" class="pl-arrow pl-prev" aria-label="Negócio anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>' +
+    '<div class="pl-where"><b class="pl-name"></b><span class="pl-count"></span><span class="pl-dots" aria-hidden="true">' + SH.map(function () { return '<i></i>'; }).join('') + '</span></div>' +
+    '<button type="button" class="pl-arrow pl-next" aria-label="Próximo negócio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>' +
+    '</div></div>' +
     '<div class="pl-row pl-pks" role="tablist" aria-label="Pacote">' + PK.map(function (p, i) {
       return '<button type="button" class="pl-pk" role="tab" data-p="' + i + '"><b>' + p.n + '</b><small>' + p.d + '</small></button>';
     }).join('') + '</div>' +
     '<div class="pl-go"><button type="button" class="btn btn-cyan pl-open">Abrir prévia completa</button></div>';
   grid.parentNode.insertBefore(st, grid); grid.hidden = true;
 
-  var chips = st.querySelectorAll('.pl-chip'), pks = st.querySelectorAll('.pl-pk'), img = st.querySelector('.pl-img img'), scr = st.querySelector('.pl-screen');
+  var chips = st.querySelectorAll('.pl-chip'), pks = st.querySelectorAll('.pl-pk'), track = st.querySelector('.pl-track'),
+    slides = st.querySelectorAll('.pl-slide'), dots = st.querySelectorAll('.pl-dots i');
   function render() {
     var s = SH[cur];
-    chips.forEach(function (c, i) { c.classList.toggle('on', i === cur); c.setAttribute('aria-selected', i === cur); });
+    chips.forEach(function (c, i) { c.classList.toggle('on', i === cur); c.setAttribute('aria-pressed', i === cur); });
     pks.forEach(function (c, i) { c.classList.toggle('on', i === pk); c.setAttribute('aria-selected', i === pk); });
-    img.src = IMG(s.slug); img.alt = 'Fachada ilustrada da ' + s.kicker.toLowerCase() + ' ' + s.brand;
-    st.querySelector('.k').textContent = s.kicker + ' · pacote ' + PK[pk].n;
-    st.querySelector('h3').textContent = s.brand;
-    st.querySelector('.dor').textContent = s.dor;
-    st.querySelector('.sol').textContent = s.sol;
-    scr.classList.remove('flash'); void scr.offsetWidth; scr.classList.add('flash');
+    dots.forEach(function (d, i) { d.classList.toggle('on', i === cur); });
+    slides.forEach(function (sl, i) { sl.classList.toggle('on', i === cur); sl.querySelector('.k').textContent = SH[i].kicker + ' · pacote ' + PK[pk].n; });
+    st.querySelector('.pl-name').textContent = s.kicker;
+    st.querySelector('.pl-count').textContent = (cur + 1) + ' de ' + N;
+    st.querySelector('.pl-open').textContent = 'Abrir prévia: ' + s.kicker;
   }
+  // leva o carrossel até o negócio i (só rola o trilho, não a página)
+  function slideTo(i, smooth) {
+    var sl = slides[i]; if (!sl) return;
+    track.scrollTo({ left: sl.offsetLeft - (track.clientWidth - sl.offsetWidth) / 2, behavior: smooth && !RM ? 'smooth' : 'auto' });
+  }
+  // descobre qual slide está no centro depois do arrasto
+  var raf = 0;
+  track.addEventListener('scroll', function () {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(function () {
+      var mid = track.scrollLeft + track.clientWidth / 2, best = 0, bd = 1e9;
+      slides.forEach(function (sl, i) { var d = Math.abs(sl.offsetLeft + sl.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = i; } });
+      if (best !== cur) { cur = best; render(); }
+    });
+  }, { passive: true });
   function robot(el, pose) {
     if (!window.Buddy || !Buddy.ready()) return false;
     var r = el.getBoundingClientRect(), H = innerHeight, head = Math.min(190, H * .26), dy = 0;       // traz o botão (com folga para o robô em cima) para a tela
@@ -44,17 +70,24 @@
     else Buddy.goTo(el, { pose: pose, secs: 2.6, lift: -4 });
     return true;
   }
-  function pickShop(i, byUser) { cur = i; render(); if (byUser) robot(chips[i], 'joinha'); }
+  function pickShop(i, byUser) { cur = (i + N) % N; render(); slideTo(cur, true); if (byUser && chips[cur].offsetParent) robot(chips[cur], 'joinha'); }
   function pickPk(i, byUser) { pk = i; render(); if (byUser) robot(pks[i], PK[i].pose); }
-  var openBtn = st.querySelector('.pl-open');
   function open() { F.open(cur, pk + 1); }
 
   st.addEventListener('click', function (e) {
     var c = e.target.closest('.pl-chip'), p = e.target.closest('.pl-pk');
     if (c) pickShop(+c.dataset.i, true); else if (p) pickPk(+p.dataset.p, true);
+    else if (e.target.closest('.pl-prev')) pickShop(cur - 1, false);
+    else if (e.target.closest('.pl-next')) pickShop(cur + 1, false);
+    else if (e.target.closest('.pl-slide')) open();
     else if (e.target.closest('.pl-open')) open();
   });
-  render();
+  track.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') { e.preventDefault(); pickShop(cur + 1, false); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); pickShop(cur - 1, false); }
+  });
+  window.addEventListener('resize', function () { slideTo(cur, false); });
+  render(); slideTo(0, false);
 
   // ao chegar no palco, o robô sobe direto no botão selecionado (pacote) e fica lá; se o visitante clicar, ele vai até o clicado
   var inView = false;
