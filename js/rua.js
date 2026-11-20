@@ -625,9 +625,6 @@ const stickEl = document.getElementById('stick'), knobEl = document.getElementBy
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => stickEl.addEventListener(ev, rel));
   stickEl.addEventListener('contextmenu', e => e.preventDefault());
 }
-const jumpBtn = document.getElementById('padJump');
-jumpBtn.addEventListener('pointerdown', e => { e.preventDefault(); jump(); buzz(12); });
-jumpBtn.addEventListener('contextmenu', e => e.preventDefault());
 const actGo = () => { if (activeIdx >= 0 && !modalOpen) { buzz(10); shopAction(activeIdx); } };
 actEl.addEventListener('click', actGo); scBtn.addEventListener('click', actGo);
 
