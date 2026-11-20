@@ -8,7 +8,7 @@
   var ZP = 4;                        // distância do jogador até a câmera
   var FAR = 50;                      // até onde se desenha
   var G = 34, JUMP_V = 12.2;         // gravidade e impulso do pulo
-  var SLIDE_T = 0.72, JET_T = 5.5, JET_Y = 3.95;
+  var SLIDE_T = 0.72, JET_T = 5.5, JET_Y = 3.3;
   var V0 = 15, VMAX = 34, ACC = 0.32;
   var KEY_BEST = 'forja-jogo-recorde';
 
@@ -56,6 +56,15 @@
   function py(y, z) { return horizon + (camH + camY - y) * f / z; }
   function sc(z) { return f / z; }
 
+  /* ---------- artes (etapa 2): Forjabô de costas e veículos de trás ---------- */
+  var IMG = {};
+  ['r-corre-1', 'r-corre-2', 'r-pulo', 'r-desliza', 'r-jet', 'r-tonto', 'v-carro', 'v-caminhao', 'v-onibus', 'v-cavalete'].forEach(function (n) {
+    var im = new Image(); im.decoding = 'async'; im.src = 'assets/jogo/' + n + '.webp?v=1';
+    im.onload = function () { if (im.decode) im.decode().catch(function () {}); };
+    IMG[n] = im;
+  });
+  function pronta(n) { var im = IMG[n]; return im && im.complete && im.naturalWidth > 0 ? im : null; }
+
   /* ---------- estado ---------- */
   var S = {};
   var obs = [], coins = [], items = [], blds = [], lamps = [];
@@ -79,10 +88,10 @@
   /* ---------- geração de obstáculos ---------- */
   // tipos: car (pula ou desvia), truck (desliza por baixo), bus (só desvia), bar (pula ou desliza)
   var TIPO = {
-    car:   { w: 2.0, len: 3.6, solid: [0, 1.35] },
-    truck: { w: 2.3, len: 6.5, solid: [1.25, 3.7] },
-    bus:   { w: 2.3, len: 9.0, solid: [0, 3.5] },
-    bar:   { w: 2.3, len: 0.6, solid: [1.0, 1.6] }
+    car:   { w: 2.1, len: 3.6, solid: [0, 1.5],   img: 'v-carro',    dw: 2.1 },
+    truck: { w: 2.3, len: 6.5, solid: [1.0, 3.4], img: 'v-caminhao', dh: 3.4 },
+    bus:   { w: 2.3, len: 9.0, solid: [0, 2.7],   img: 'v-onibus',   dw: 2.45 },
+    bar:   { w: 2.3, len: 0.6, solid: [0.9, 1.5], img: 'v-cavalete', dw: 2.5 }
   };
   var CORES = ['#d6453d', '#2f6fd6', '#f2f2f2', '#2b2f36', '#f2b13a', '#3aa36b', '#9aa3ad'];
   function linha(z) {
@@ -295,6 +304,12 @@
     ctx.globalAlpha = nevoa(z);
     // sombra
     ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(cx, gy, w * 0.58, 0.22 * s, 0, 0, 7); ctx.fill();
+    var im = pronta(T.img);
+    if (im) {
+      var dw = T.dw ? T.dw * s : T.dh * s * im.naturalWidth / im.naturalHeight, dh = dw * im.naturalHeight / im.naturalWidth;
+      ctx.drawImage(im, cx - dw / 2, gy - dh + 0.06 * s, dw, dh);
+      ctx.globalAlpha = 1; return;
+    }
     // lateral visível (dá profundidade): face do fundo mais escura
     var zb = Math.min(FAR, o.z + T.len), sb = sc(zb);
     if (o.t === 'car') {
@@ -360,6 +375,17 @@
     var k = Math.max(0.35, 1 - S.y / 6);
     ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, gy, 0.8 * s * k, 0.22 * s * k, 0, 0, 7); ctx.fill();
     var tilt = (S.lane * LANE - S.x) * 0.06;
+    var nome = S.over ? 'r-tonto' : fly ? 'r-jet' : sl ? 'r-desliza' : S.y > 0.05 ? 'r-pulo' : (Math.floor(S.run * 0.42) % 2 ? 'r-corre-2' : 'r-corre-1');
+    var im = pronta(nome);
+    if (im) {
+      var hh = 2.55 * s * im.naturalHeight / 400 * (sl ? 0.85 : 1), ww = hh * im.naturalWidth / im.naturalHeight;
+      var bob = !fly && !sl && S.y <= 0.05 && S.on ? Math.abs(Math.sin(ph)) * 0.07 * s : fly ? Math.sin(S.run * 0.6) * 0.05 * s : 0;
+      ctx.save(); ctx.translate(x, y - bob); ctx.rotate(-tilt * 1.4);
+      if (fly) { ctx.globalAlpha = 0.85 + Math.random() * 0.15; }
+      ctx.drawImage(im, -ww / 2, -hh, ww, hh);
+      ctx.restore(); ctx.globalAlpha = 1;
+      return;
+    }
     ctx.save(); ctx.translate(x, y); ctx.rotate(-tilt);
     var u = s * 1.55;                                   // robô em escala de jogo (mais visível)
     if (sl) {                                          // deslizando: agachado, quase deitado
