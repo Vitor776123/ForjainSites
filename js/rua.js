@@ -539,7 +539,7 @@ function openShop(i) {
 }
 function showShop(i, pacote) {
   const s = SHOPS[i];
-  modalTitle.textContent = 'Modelo · ' + s.kicker + (s.brand ? ' ' + s.brand : '');
+  modalTitle.textContent = 'Modelo · ' + s.kicker;   // prévia limpa: só a legenda
   // modelos de verdade (site no ar) abrem pelo endereço próprio; os demais, pela página de demonstração
   const url = s.url || (s.slug + '/index.html' + (pacote ? '?pacote=' + pacote : ''));
   modalOpenLink.href = url;
