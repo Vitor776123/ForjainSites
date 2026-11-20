@@ -702,7 +702,8 @@ function buildAbout() {
   }
 }
 function buildContact() {
-  const a = document.getElementById('wa'), n = (CFG.whatsapp || '').replace(/\D/g, '');
+  const a = document.getElementById('wa'); if (!a) return;   // o contato agora é o chat (briefing.js)
+  const n = (CFG.whatsapp || '').replace(/\D/g, '');
   if (n) {
     const msg = CFG.mensagem || 'Oi! Vi o portfólio da Forja de inSITES e quero conversar sobre o site do meu negócio.';
     a.href = 'https://wa.me/' + n + '?text=' + encodeURIComponent(msg); a.target = '_blank'; a.rel = 'noopener';
