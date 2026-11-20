@@ -232,6 +232,16 @@ function build() {
   fitSigns();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSigns);
   applyCamera(); renderRobot(true);
+  warmUp();
+}
+/* deixa tudo pronto antes de andar: decodifica as imagens da rua e carrega as poses do robô,
+   para nada "piscar" ou travar quando aparece pela primeira vez */
+function warmUp() {
+  const dec = im => { if (im.decode) im.decode().catch(() => {}); };
+  stage.querySelectorAll('img').forEach(dec);
+  ['andando-1', 'andando-2', 'andando-3', 'andando-4', 'derrapando', 'agachado', 'estrela', 'comemorando', 'apontando', 'pensativo', 'joinha', 'celular', 'porta', 'caindo', 'tonto', 'levantando', 'teleporte', 'aparecendo']
+    .concat(SHOPS.map(s => SHOP_POSE[s.slug]).filter(Boolean))
+    .forEach(n => { const im = mkFrame(n); if (im) dec(im); });
 }
 
 /* ajusta o texto das placas para caber */
@@ -255,8 +265,9 @@ function fitSigns() {
 }
 
 /* ---------- câmera e robô ---------- */
+const DPR = window.devicePixelRatio || 1, snap = v => Math.round(v * DPR) / DPR;   // posição em pixel inteiro da tela: imagem nítida, sem tremer
 function applyCamera() {
-  const t = f => 'translate3d(' + (-camU * H * f) + 'px,0,0)';
+  const t = f => 'translate3d(' + snap(-camU * H * f) + 'px,0,0)';
   if (layers.far) layers.far.style.transform = t(FAR_F);
   if (layers.mid) layers.mid.style.transform = t(MID_F);
   if (layers.main) layers.main.style.transform = t(1);
@@ -296,7 +307,7 @@ function hold(p, t) { holdPose = p; holdT = t; }
 function renderRobot() {
   const sx = (robotU - camU) * H, sy = ry * H;
   const sc = 1 + Math.max(0, ry - ROBOT_FEET) * .55;
-  robotEl.style.transform = 'translate3d(' + sx + 'px,' + (sy - jy * H) + 'px,0) scale(' + sc + ')';
+  robotEl.style.transform = 'translate3d(' + snap(sx) + 'px,' + snap(sy - jy * H) + 'px,0) scale(' + sc + ')';
   robotEl.style.zIndex = ry < LANE_F - .005 ? 5 : (ry < LANE_N - .005 ? 7 : 9);
   rshadow.style.transform = 'translateY(' + (jy * H) + 'px) scale(' + (1 - Math.min(.45, jy * 2.2)) + ')';
   rflip.style.transform = 'scaleX(' + facing + ')';
@@ -516,7 +527,7 @@ function tick(t) {
     if (c.v > 0 && c.x > L + 1.4) c.x = -c.w - 1.2 - Math.random() * 1.5;
     if (c.v < 0 && c.x < -c.w - 1.4) c.x = L + 1.2 + Math.random() * 1.5;
   }
-  for (const c of cars) c.el.style.transform = 'translate3d(' + (c.x * H) + 'px,0,0)';
+  for (const c of cars) c.el.style.transform = 'translate3d(' + snap(c.x * H) + 'px,0,0)';
 
   applyCamera(); renderRobot();
   requestAnimationFrame(tick);
