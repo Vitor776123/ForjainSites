@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,600&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=12">
+<link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body>
 
@@ -53,18 +53,16 @@
       <span class="hint-sep hint-keys" aria-hidden="true">·</span>
       <span class="hint-keys"><kbd>↓</kbd> atravessar a rua</span>
       <span class="hint-sep hint-touch" aria-hidden="true">·</span>
-      <span class="hint-touch">direcional: andar · ▲ pular · ▼ atravessar a rua</span>
+      <span class="hint-touch">arraste o controle para andar</span>
     </div>
 
     <div class="shopcard" id="shopcard" aria-hidden="true"><span class="sc-k"></span><p class="sc-t"></p><button class="sc-b" id="scBtn" type="button" tabindex="-1"></button></div>
 
     <div class="pad" id="pad">
       <div class="stick" id="stick" role="group" aria-label="Direcional: arraste para caminhar, empurre para cima para pular, para baixo para descer à rua">
-        <span class="st-a st-u" aria-hidden="true">▲</span><span class="st-a st-d" aria-hidden="true">▼</span><span class="st-a st-l" aria-hidden="true">◀</span><span class="st-a st-r" aria-hidden="true">▶</span>
         <div class="stick-knob" id="stickKnob"></div>
       </div>
       <button class="pad-act" id="padAct" type="button" hidden>Entrar na loja</button>
-      <button class="pad-jump" id="padJump" type="button" aria-label="Pular"><span aria-hidden="true">PULAR</span></button>
     </div>
 
     <p class="sr-only" id="live" aria-live="polite"></p>
@@ -155,10 +153,10 @@
 <script src="js/config.js?v=6"></script>
 <script src="js/manifest.js?v=5"></script>
 <script src="js/poses.js?v=5"></script>
-<script src="js/intro.js?v=8"></script>
-<script src="js/rua.js?v=6"></script>
+<!-- abertura (vídeo + tela "Começar") desligada por enquanto; para voltar, descomente: <script src="js/intro.js?v=8"></script> -->
+<script src="js/rua.js?v=7"></script>
 <script src="js/companion.js?v=16"></script>
-<script src="js/palco.js?v=6"></script>
+<script src="js/palco.js?v=7"></script>
 <script src="js/entradas.js?v=5"></script>
 <script src="js/busca.js?v=5"></script>
 </body>
