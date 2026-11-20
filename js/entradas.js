@@ -3,10 +3,9 @@
   if (!('IntersectionObserver' in window)) return;
   var RM = matchMedia('(prefers-reduced-motion: reduce)').matches, root = document.documentElement;
   var SECS = [
-    ['#dor', '.eyebrow, h2, .trio article'],
+    ['#agenda', '.eyebrow, h2, .lead, .trio article, .steps li'],
     ['#modelos', '.eyebrow, h2, .lead, .palco, .note'],
     ['#quem', '.about-grid > *'],
-    ['#como', '.eyebrow, h2, .steps li'],
     ['#contato', '.contact .wrap > *, .contact > *']
   ];
   var busy = 0;
@@ -44,7 +43,7 @@
   setTimeout(function () { todo.forEach(function (k) { /* rede de segurança: nada fica escondido */ if (!k.els[0].classList.contains('rv-in') && k.sec.getBoundingClientRect().top < innerHeight * .6) k.els.forEach(function (e) { e.classList.add('rv-in'); }); }); }, 5000);
 
   // brincar quando o visitante para de rolar (2 s; no palco, 5 s): sobe nos blocos, pula, voa, teleporta, escala as bordas
-  var PLAY = '#dor h2, #dor .trio article, #modelos .eyebrow, #modelos h2, .pl-chip, .pl-screen, .pl-pk, .pl-open, #quem h2, #quem .photo, #quem .about-grid > div > *, #como h2, #como .steps li, #contato h2, #contato .btn';
+  var PLAY = '#agenda h2, #agenda .trio article, #modelos .eyebrow, #modelos h2, .pl-chip, .pl-screen, .pl-pk, .pl-open, #quem h2, #quem .photo, #quem .about-grid > div > *, #contato h2, #contato .btn';
   var lastAct = performance.now(), playing = false, ptimer = 0, lastEl = null, POSES = ['danca', 'comemorando', 'estrela', 'joinha', 'pensativo', 'comemorando', 'espiando'];
   function onPalco() { var B = window.Buddy, e = B && B.el && B.el(); return !!(e && e.closest && e.closest('.palco')); }
   function pickTarget(maxFrac) {
