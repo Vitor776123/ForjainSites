@@ -62,7 +62,7 @@
       reactUntil = 0, reactI = 0, drag = null, leap = null, arc = 0,
       fastDir = 0, fastCool = 0, lastSyT = 0, idleW = 0, wanderIn = 5,
       flyDy = 0, flyOn = false, flyBack = false, flyUntil = 0, prevY = 0,
-      perch = null, perchKeep = false, settle = null, pendPose = null, faceOv = null, mWall = 0, cling = null, clingCool = 0, clingDy = 0, slideT = 0, faceTo = 1, faceT = 0, mHome = 0, mAct = 700, mTurn = 500, mSpd = 0.22, holdUntil = 0, lastAct = '';
+      perch = null, perchKeep = false, settle = null, hovering = false, pendPose = null, faceOv = null, mWall = 0, cling = null, clingCool = 0, clingDy = 0, slideT = 0, faceTo = 1, faceT = 0, mHome = 0, mAct = 700, mTurn = 500, mSpd = 0.22, holdUntil = 0, lastAct = '';
   var mini = false, mf = 0, mfT = 0, mWalkD = 0, mStill = 0, mSecShown = -1, mLastX = 0, dotsX = [], trackL = 0, trackW = 0;
 
   function setPose(p) {
@@ -576,6 +576,33 @@
       }
       return false;
     },
+    hover: function () {                                      // voa até um canto livre (sem texto atrás) e fica pairando com o jetpack
+      if (!shown || hidden || window.INTRO_OPEN || leap || RM || (drag && drag.moved)) return false;
+      var d = dims(), off = d.w * 0.12, bw = d.w * 0.76, best = null, h, hs = [], top = Math.max(homeY(), d.maxY - 90);
+      for (h = homeY() + 50; h <= Math.max(homeY() + 50, top); h += 36) hs.push(h);   // sempre um pouco acima do chão: está voando
+      [Math.min(6, d.maxX), Math.max(0, d.maxX - 6)].forEach(function (xc) {
+        hs.forEach(function (hh) {
+          var iv = obstacles(window.innerHeight - d.h - hh, window.innerHeight - hh), ov = 0;
+          for (var i = 0; i < iv.length; i++) ov += Math.max(0, Math.min(xc + off + bw, iv[i][1]) - Math.max(xc + off, iv[i][0]));
+          var sc = ov * 10 + Math.abs(xc - x) * 0.04 + Math.abs(hh - y) * 0.06;
+          if (!best || sc < best.sc) best = { sc: sc, x: xc, h: hh };
+        });
+      });
+      perch = null; pendPose = null; parked = false; pend = 0; cling = null;
+      pos = best.x; offY = best.h; flyOn = true; flyBack = false; flyUntil = performance.now() + 864e5; hovering = true;
+      return true;
+    },
+    land: function () {                                       // pousa no chão como no fim do teletransporte e faz o joinha
+      if (!hovering) return false;
+      hovering = false;
+      if (!shown || hidden || leap || (drag && drag.moved)) return false;
+      flyOn = false; flyBack = false; flame(false);
+      if (!mini) offY = homeY(); else mHome = Math.round(offY);   // celular: pousa ali mesmo, no espaço livre ao lado do texto
+      perchKeep = true; startMove('tele', x); perchKeep = false;
+      pendPose = { pose: 'joinha', secs: 4, face: 0, at: performance.now() + 1050 };
+      return true;
+    },
+    endHover: function () { if (hovering) { hovering = false; if (flyOn) { flyBack = true; offY = homeY(); } } },
     perched: function () { return !!perch; },
     el: function () { return perch ? perch.el : null; }
   };
